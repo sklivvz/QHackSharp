@@ -20,48 +20,46 @@
  */
 namespace HackSharp
 {
-/*
- * QHack uses one large structure for the complete dungeon.  There are
- * no pointers or other fancy stuff involved since this game should be
- * simple and easy to use.
- *
- * Naturally this prevents some useful things and is not the way a big
- * roguelike game should be written (you sacrifice too much in flexibility),
- * but since it's easy to use I headed into this direction.
- */
+    /*
+     * QHack uses one large structure for the complete dungeon.  There are
+     * no pointers or other fancy stuff involved since this game should be
+     * simple and easy to use.
+     *
+     * Naturally this prevents some useful things and is not the way a big
+     * roguelike game should be written (you sacrifice too much in flexibility),
+     * but since it's easy to use I headed into this direction.
+     */
 
     public class DungeonComplex
     {
-        public static DungeonComplex D = new DungeonComplex();
-
         /* The current level number. */
-        public byte Dl;
+        public byte dl;
 
         /* Last player Coordinates. */
-        public Coord Opx;
-        public Coord Opy;
+        public byte opx;
+        public byte opy;
 
 
         /* The panel positions. */
-        public Coord Psx;
-        public Coord Psy;
-        public Coord Px;
-        public Coord Py;
-        public Coord[] Stxd; // [MAX_DUNGEON_LEVEL - 1];
-        public Coord[] Stxu; // [MAX_DUNGEON_LEVEL];
-        public Coord[] Styd; // [MAX_DUNGEON_LEVEL - 1];
-        public Coord[] Styu; // [MAX_DUNGEON_LEVEL];
+        public byte psx;
+        public byte psy;
+        public byte px;
+        public byte py;
+        public byte[] stxd; // [MAX_DUNGEON_LEVEL - 1];
+        public byte[] stxu; // [MAX_DUNGEON_LEVEL];
+        public byte[] styd; // [MAX_DUNGEON_LEVEL - 1];
+        public byte[] styu; // [MAX_DUNGEON_LEVEL];
 
         /* Level was already visited? */
-        public bool Visited; // [MAX_DUNGEON_LEVEL];
+        public bool[] visited = new bool[Config.MAX_DUNGEON_LEVEL];
 
         /* The knowledge map. */
-        private byte[,,] _known;
+        public byte[, ,] known;
 
         /* The player data. */
-        private Player _pc;
+        public Player pc;
 
         /* NSECT_W * NSECT_H Sections for each level. */
-        private Section[,,] _s;
+        public Section[, ,] s = new Section[Config.MAX_DUNGEON_LEVEL, Config.NSECT_W, Config.NSECT_H];
     }
 }

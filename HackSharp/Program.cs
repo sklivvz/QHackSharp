@@ -57,7 +57,8 @@ namespace HackSharp
             stdprtstr(".");
             init_monsters();
             stdprtstr(".");
-            init_dungeon();
+            var dungeon = new Dungeon();
+            dungeon.init_dungeon();
             stdprtstr(".");
             init_io();
             InitScreen();

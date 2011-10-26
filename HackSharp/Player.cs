@@ -1,6 +1,6 @@
 namespace HackSharp
 {
-    internal class Player
+    public class Player
     {
     }
 }

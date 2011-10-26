@@ -46,6 +46,7 @@
     <Compile Include="Direction.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Coord.cs" />
+    <Compile Include="Dungeon.cs" />
     <Compile Include="DungeonComplex.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Program.cs" />

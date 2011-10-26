@@ -31,14 +31,20 @@ namespace HackSharp
     public class Section
     {
         /* Room available? */
-        public byte[] Dt; //4
-        public Coord[] Dx; //4
-        public Coord[] Dy;
-        public bool Exists;
+        public bool exists;
 
         /* Room Coordinates. */
-        public Coord Rx1, Rx2, Ry1, Ry2;
+        public byte rx1;
+        public byte rx2;
+        public byte ry1;
+        public byte ry2;
 
         /* Door positions. */
+        public byte[] dx = new byte[4]; //4
+        public byte[] dy = new byte[4];
+
+        /* Door types */
+        public byte[] dt = new byte[4]; //4
+
     }
 }
