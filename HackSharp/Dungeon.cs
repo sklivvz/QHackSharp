@@ -191,18 +191,17 @@
             return (byte) Tiles.LOCKED_DOOR;
         }
 
-        /*
- * Build a map for the current dungeon level.
- *
- * This function is very important for QHack in general.  Levels are only
- * stored by their section descriptions.  The actual map is created when the
- * level is entered.  The positive thing about this is that it requires much
- * less space to save a level in this way (since you only need the outline
- * descriptions).  The negative thing is that tunneling and other additions
- * are not possible since the level desciptions have now way of recording
- * them.
- */
-
+        /// <summary>
+        /// Build a map for the current dungeon level.
+        /// 
+        /// This function is very important for QHack in general.  Levels are only
+        /// stored by their section descriptions.  The actual map is created when the
+        /// level is entered.  The positive thing about this is that it requires much
+        /// less space to save a level in this way (since you only need the outline
+        /// descriptions).  The negative thing is that tunneling and other additions
+        /// are not possible since the level desciptions have now way of recording
+        /// them.
+        /// </summary>
         private void build_map()
         {
             int x;
@@ -246,15 +245,169 @@
                 for (sy = 0; sy < Config.NSECT_H; sy++)
                 {
                     if (dir_possible(sx, sy, Direction.E))
-                        connect_sections(sx, sy, sx + 1, sy, Direction.E);
+                        connect_sections(sx, sy, sx + 1, sy, (int) Direction.E);
                     if (dir_possible(sx, sy, Direction.S))
-                        connect_sections(sx, sy, sx, sy + 1, Direction.S);
+                        connect_sections(sx, sy, sx, sy + 1, (int) Direction.S);
                 }
 
             /* Place the stairways. */
             map[d.stxu[d.dl], d.styu[d.dl]] = (byte) Tiles.STAIR_UP;
             if (d.dl < Config.MAX_DUNGEON_LEVEL - 1)
                 map[d.stxd[d.dl], d.styd[d.dl]] = (byte) Tiles.STAIR_DOWN;
+        }
+
+
+        /// <summary>
+        /// Connect two sections of a level.
+        /// </summary>
+        /// <param name="sx1"></param>
+        /// <param name="sy1"></param>
+        /// <param name="sx2"></param>
+        /// <param name="sy2"></param>
+        /// <param name="dir"></param>
+        private void connect_sections(int sx1, int sy1, int sx2, int sy2, int dir)
+        {
+            int cx1;
+            int cy1;
+            int cx2;
+            int cy2;
+
+            /* Get the start byteinates from section #1. */
+            if (d.s[d.dl, sx1, sy1].exists)
+            {
+                if (dir == (byte) Direction.S)
+                {
+                    cx1 = d.s[d.dl, sx1, sy1].dx[(byte) Direction.S];
+                    cy1 = d.s[d.dl, sx1, sy1].dy[(byte) Direction.S];
+                }
+                else
+                {
+                    cx1 = d.s[d.dl, sx1, sy1].dx[(byte) Direction.E];
+                    cy1 = d.s[d.dl, sx1, sy1].dy[(byte) Direction.E];
+                }
+            }
+            else
+            {
+                cx1 = sx1*Config.SECT_W + (Config.SECT_W/2);
+                cy1 = sy1*Config.SECT_H + (Config.SECT_H/2);
+            }
+
+            /* Get the end byteinates from section #2. */
+            if (d.s[d.dl, sx2, sy2].exists)
+            {
+                if (dir == (byte) Direction.S)
+                {
+                    cx2 = d.s[d.dl, sx2, sy2].dx[(byte) Direction.N];
+                    cy2 = d.s[d.dl, sx2, sy2].dy[(byte) Direction.N];
+                }
+                else
+                {
+                    cx2 = d.s[d.dl, sx2, sy2].dx[(byte) Direction.W];
+                    cy2 = d.s[d.dl, sx2, sy2].dy[(byte) Direction.W];
+                }
+            }
+            else
+            {
+                cx2 = sx2*Config.SECT_W + (Config.SECT_W/2);
+                cy2 = sy2*Config.SECT_H + (Config.SECT_H/2);
+            }
+
+            /* Get the middle of the section. */
+            int mx = (cx1 + cx2)/2;
+            int my = (cy1 + cy2)/2;
+
+            /* Draw the tunnel. */
+            int x = cx1;
+            int y = cy1;
+            if (dir == (byte) Direction.E)
+            {
+                /* Part #1. */
+                while (x < mx)
+                {
+                    if (map[x, y] == (byte) Tiles.ROCK)
+                        map[x, y] = (byte) Tiles.FLOOR;
+                    x++;
+                }
+
+                /* Part #2. */
+                if (y < cy2)
+                    while (y < cy2)
+                    {
+                        if (map[x, y] == (byte) Tiles.ROCK)
+                            map[x, y] = (byte) Tiles.FLOOR;
+                        y++;
+                    }
+                else
+                    while (y > cy2)
+                    {
+                        if (map[x, y] == (byte) Tiles.ROCK)
+                            map[x, y] = (byte) Tiles.FLOOR;
+                        y--;
+                    }
+
+                /* Part #3. */
+                while (x < cx2)
+                {
+                    if (map[x, y] == (byte) Tiles.ROCK)
+                        map[x, y] = (byte) Tiles.FLOOR;
+                    x++;
+                }
+                if (map[x, y] == (byte) Tiles.ROCK)
+                    map[x, y] = (byte) Tiles.FLOOR;
+            }
+            else
+            {
+                /* Part #1. */
+                while (y < my)
+                {
+                    if (map[x, y] == (byte) Tiles.ROCK)
+                        map[x, y] = (byte) Tiles.FLOOR;
+                    y++;
+                }
+                if (map[x, y] == (byte) Tiles.ROCK)
+                    map[x, y] = (byte) Tiles.FLOOR;
+
+                /* Part #2. */
+                if (x < cx2)
+                    while (x < cx2)
+                    {
+                        if (map[x, y] == (byte) Tiles.ROCK)
+                            map[x, y] = (byte) Tiles.FLOOR;
+                        x++;
+                    }
+                else
+                    while (x > cx2)
+                    {
+                        if (map[x, y] == (byte) Tiles.ROCK)
+                            map[x, y] = (byte) Tiles.FLOOR;
+                        x--;
+                    }
+
+                /* Part #3. */
+                while (y < cy2)
+                {
+                    if (map[x, y] == (byte) Tiles.ROCK)
+                        map[x, y] = (byte) Tiles.FLOOR;
+                    y++;
+                }
+            }
+            if (map[x, y] == (byte) Tiles.ROCK)
+                map[x, y] = (byte) Tiles.FLOOR;
+        }
+
+        /// <summary>
+        /// Determine whether a given section is set on a border.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        private bool dir_possible(int x, int y, Direction dir)
+        {
+            return ((dir == Direction.N && y > 0) ||
+                    (dir == Direction.S && y < Config.NSECT_H - 1) ||
+                    (dir == Direction.W && x > 0) ||
+                    (dir == Direction.E && x < Config.NSECT_W - 1));
         }
     }
 }
