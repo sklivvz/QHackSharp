@@ -190,5 +190,71 @@
 
             return (byte) Tiles.LOCKED_DOOR;
         }
+
+        /*
+ * Build a map for the current dungeon level.
+ *
+ * This function is very important for QHack in general.  Levels are only
+ * stored by their section descriptions.  The actual map is created when the
+ * level is entered.  The positive thing about this is that it requires much
+ * less space to save a level in this way (since you only need the outline
+ * descriptions).  The negative thing is that tunneling and other additions
+ * are not possible since the level desciptions have now way of recording
+ * them.
+ */
+
+        private void build_map()
+        {
+            int x;
+            int y;
+            byte sx;
+            byte sy;
+
+            /* Basic initialization. */
+            for (x = 0; x < Config.MAP_W; x++)
+                for (y = 0; y < Config.MAP_H; y++)
+                    map[x, y] = (byte) Tiles.ROCK;
+
+            /* Build each section. */
+            for (sx = 0; sx < Config.NSECT_W; sx++)
+                for (sy = 0; sy < Config.NSECT_H; sy++)
+                {
+                    /* Handle each section. */
+                    if (d.s[d.dl, sx, sy].exists)
+                    {
+                        /* Paint existing room. */
+                        for (x = d.s[d.dl, sx, sy].rx1 + 1;
+                             x < d.s[d.dl, sx, sy].rx2;
+                             x++)
+                            for (y = d.s[d.dl, sx, sy].ry1 + 1;
+                                 y < d.s[d.dl, sx, sy].ry2;
+                                 y++)
+                                map[x, y] = (byte) Tiles.FLOOR;
+
+                        /* Paint doors. */
+                        byte dir;
+                        for (dir = (byte) Direction.N; dir <= (byte) Direction.E; dir++)
+                            if (d.s[d.dl, sx, sy].dt[dir] != Tiles.NO_DOOR)
+                                map[d.s[d.dl, sx, sy].dx[dir], d.s[d.dl, sx, sy].dy[dir]]
+                                    = d.s[d.dl, sx, sy].dt[dir];
+                    }
+                }
+
+
+            /* Connect each section. */
+            for (sx = 0; sx < Config.NSECT_W; sx++)
+                for (sy = 0; sy < Config.NSECT_H; sy++)
+                {
+                    if (dir_possible(sx, sy, Direction.E))
+                        connect_sections(sx, sy, sx + 1, sy, Direction.E);
+                    if (dir_possible(sx, sy, Direction.S))
+                        connect_sections(sx, sy, sx, sy + 1, Direction.S);
+                }
+
+            /* Place the stairways. */
+            map[d.stxu[d.dl], d.styu[d.dl]] = (byte) Tiles.STAIR_UP;
+            if (d.dl < Config.MAX_DUNGEON_LEVEL - 1)
+                map[d.stxd[d.dl], d.styd[d.dl]] = (byte) Tiles.STAIR_DOWN;
+        }
     }
 }
