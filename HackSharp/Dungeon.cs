@@ -3,8 +3,8 @@
     internal class Dungeon
     {
         public static byte existence_chance;
-        public static byte[,] map = new byte[Config.MAP_W, Config.MAP_H];
-        public DungeonComplex d;
+        public static byte[,] map = new byte[Config.MAP_W,Config.MAP_H];
+        public DungeonComplex d = new DungeonComplex();
 
 
         //Define all the basic dungeon structures and create the complete dungeon map.
@@ -85,7 +85,7 @@
             if (rand_byte(100) + 1 >= existence_chance)
             {
                 /* No room here. */
-                d.s[d.dl][x][y].exists = false;
+                d.s[d.dl, x, y].exists = false;
 
                 /* Decrease the chance for further empty rooms. */
                 existence_chance += 3;
@@ -105,10 +105,10 @@
 
                 do
                 {
-                    d.s[d.dl, x, y].rx1 = x * Config.SECT_W + rand_byte(3) + 1;
-                    d.s[d.dl, x, y].ry1 = y * Config.SECT_H + rand_byte(3) + 1;
-                    d.s[d.dl, x, y].rx2 = (x + 1) * Config.SECT_W - rand_byte(3) - 2;
-                    d.s[d.dl, x, y].ry2 = (y + 1) * Config.SECT_H - rand_byte(3) - 2;
+                    d.s[d.dl, x, y].rx1 = x*Config.SECT_W + rand_byte(3) + 1;
+                    d.s[d.dl, x, y].ry1 = y*Config.SECT_H + rand_byte(3) + 1;
+                    d.s[d.dl, x, y].rx2 = (x + 1)*Config.SECT_W - rand_byte(3) - 2;
+                    d.s[d.dl, x, y].ry2 = (y + 1)*Config.SECT_H - rand_byte(3) - 2;
                 } while (d.s[d.dl, x, y].rx2 - d.s[d.dl, x, y].rx1
                          < 3 ||
                          d.s[d.dl, x, y].ry2 - d.s[d.dl, x, y].ry1
@@ -121,10 +121,10 @@
                  *      some directions to make the dungeon less regular.
                  */
 
-                for (dir = (byte)Direction.N; dir <= (byte)Direction.E; dir++)
+                for (dir = (byte) Direction.N; dir <= (byte) Direction.E; dir++)
                     if (dir_possible(x, y, dir))
                     {
-                        switch ((Direction)dir)
+                        switch ((Direction) dir)
                         {
                             case Direction.N:
                                 d.s[d.dl, x, y].dx[dir] = d.s[d.dl, x, y].rx1 + rand_byte(room_width(x, y) - 1) + 1;
@@ -145,15 +145,50 @@
                                 d.s[d.dl, x, y].dy[dir] = d.s[d.dl, x, y].ry1 + rand_byte(room_height(x, y) - 1) + 1;
                                 d.s[d.dl, x, y].dx[dir] = d.s[d.dl, x, y].rx1;
                                 break;
-
-                            default:
-                                break;
                         }
                         d.s[d.dl, x, y].dt[dir] = rand_door();
                     }
                     else
                         d.s[d.dl, x, y].dt[dir] = Tiles.NO_DOOR;
             }
+        }
+
+        /// <summary>
+        /// Calculate the room width for a specific room section at (x, y).
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        private int room_width(byte x, byte y)
+        {
+            return (d.s[d.dl, x, y].rx2 - d.s[d.dl, x, y].rx1 - 1);
+        }
+
+        /// <summary>
+        /// Calculate the room height for a specific room section at (x, y).
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        private int room_height(byte x, byte y)
+        {
+            return (d.s[d.dl, x, y].ry2 - d.s[d.dl, x, y].ry1 - 1);
+        }
+
+        /// <summary>
+        /// Determine a random door type.
+        /// </summary>
+        /// <returns></returns>
+        private byte rand_door()
+        {
+            byte roll = rand_byte(100);
+
+            if (roll < 75)
+                return (byte) Tiles.OPEN_DOOR;
+            else if (roll < 90)
+                return (byte) Tiles.CLOSED_DOOR;
+
+            return (byte) Tiles.LOCKED_DOOR;
         }
     }
 }
