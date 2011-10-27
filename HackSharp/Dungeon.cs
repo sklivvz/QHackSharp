@@ -1,4 +1,7 @@
-﻿namespace HackSharp
+﻿using System;
+using System.Drawing;
+
+namespace HackSharp
 {
     internal class Dungeon
     {
@@ -6,8 +9,9 @@
         public static byte[,] map = new byte[Config.MAP_W,Config.MAP_H];
         public DungeonComplex d = new DungeonComplex();
 
-
-        //Define all the basic dungeon structures and create the complete dungeon map.
+        /// <summary>
+        /// Define all the basic dungeon structures and create the complete dungeon map.
+        /// </summary>
         public void init_dungeon()
         {
             create_complete_dungeon();
@@ -80,6 +84,11 @@
             dig_stairs();
         }
 
+        private byte rand_int(int sectNumber)
+        {
+            throw new NotImplementedException();
+        }
+
         private void dig_section(byte x, byte y)
         {
             if (rand_byte(100) + 1 >= existence_chance)
@@ -92,7 +101,7 @@
             }
             else
             {
-                byte dir;
+                Direction dir;
 
                 /* Yeah :-) ! */
                 d.s[d.dl, x, y].exists = true;
@@ -105,10 +114,10 @@
 
                 do
                 {
-                    d.s[d.dl, x, y].rx1 = x*Config.SECT_W + rand_byte(3) + 1;
-                    d.s[d.dl, x, y].ry1 = y*Config.SECT_H + rand_byte(3) + 1;
-                    d.s[d.dl, x, y].rx2 = (x + 1)*Config.SECT_W - rand_byte(3) - 2;
-                    d.s[d.dl, x, y].ry2 = (y + 1)*Config.SECT_H - rand_byte(3) - 2;
+                    d.s[d.dl, x, y].rx1 = (byte) (x*Config.SECT_W + rand_byte(3) + 1);
+                    d.s[d.dl, x, y].ry1 = (byte) (y*Config.SECT_H + rand_byte(3) + 1);
+                    d.s[d.dl, x, y].rx2 = (byte) ((x + 1)*Config.SECT_W - rand_byte(3) - 2);
+                    d.s[d.dl, x, y].ry2 = (byte) ((y + 1)*Config.SECT_H - rand_byte(3) - 2);
                 } while (d.s[d.dl, x, y].rx2 - d.s[d.dl, x, y].rx1
                          < 3 ||
                          d.s[d.dl, x, y].ry2 - d.s[d.dl, x, y].ry1
@@ -121,36 +130,45 @@
                  *      some directions to make the dungeon less regular.
                  */
 
-                for (dir = (byte) Direction.N; dir <= (byte) Direction.E; dir++)
+                for (dir = Direction.N; dir <= Direction.E; dir++)
                     if (dir_possible(x, y, dir))
                     {
-                        switch ((Direction) dir)
+                        switch (dir)
                         {
                             case Direction.N:
-                                d.s[d.dl, x, y].dx[dir] = d.s[d.dl, x, y].rx1 + rand_byte(room_width(x, y) - 1) + 1;
-                                d.s[d.dl, x, y].dy[dir] = d.s[d.dl, x, y].ry1;
+                                d.s[d.dl, x, y].dx[(int) dir] =
+                                    (byte) (d.s[d.dl, x, y].rx1 + rand_byte(room_width(x, y) - 1) + 1);
+                                d.s[d.dl, x, y].dy[(int) dir] = d.s[d.dl, x, y].ry1;
                                 break;
 
                             case Direction.S:
-                                d.s[d.dl, x, y].dx[dir] = d.s[d.dl, x, y].rx1 + rand_byte(room_width(x, y) - 1) + 1;
-                                d.s[d.dl, x, y].dy[dir] = d.s[d.dl, x, y].ry2;
+                                d.s[d.dl, x, y].dx[(int) dir] =
+                                    (byte) (d.s[d.dl, x, y].rx1 + rand_byte(room_width(x, y) - 1) + 1);
+                                d.s[d.dl, x, y].dy[(int) dir] = d.s[d.dl, x, y].ry2;
                                 break;
 
                             case Direction.E:
-                                d.s[d.dl, x, y].dy[dir] = d.s[d.dl, x, y].ry1 + rand_byte(room_height(x, y) - 1) + 1;
-                                d.s[d.dl, x, y].dx[dir] = d.s[d.dl, x, y].rx2;
+                                d.s[d.dl, x, y].dy[(int) dir] =
+                                    (byte) (d.s[d.dl, x, y].ry1 + rand_byte(room_height(x, y) - 1) + 1);
+                                d.s[d.dl, x, y].dx[(int) dir] = d.s[d.dl, x, y].rx2;
                                 break;
 
                             case Direction.W:
-                                d.s[d.dl, x, y].dy[dir] = d.s[d.dl, x, y].ry1 + rand_byte(room_height(x, y) - 1) + 1;
-                                d.s[d.dl, x, y].dx[dir] = d.s[d.dl, x, y].rx1;
+                                d.s[d.dl, x, y].dy[(int) dir] =
+                                    (byte) (d.s[d.dl, x, y].ry1 + rand_byte(room_height(x, y) - 1) + 1);
+                                d.s[d.dl, x, y].dx[(int) dir] = d.s[d.dl, x, y].rx1;
                                 break;
                         }
-                        d.s[d.dl, x, y].dt[dir] = rand_door();
+                        d.s[d.dl, x, y].dt[(int) dir] = rand_door();
                     }
                     else
-                        d.s[d.dl, x, y].dt[dir] = Tiles.NO_DOOR;
+                        d.s[d.dl, x, y].dt[(int) dir] = Tiles.NO_DOOR;
             }
+        }
+
+        private byte rand_byte(int p0)
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -159,7 +177,7 @@
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        private int room_width(byte x, byte y)
+        private int room_width(int x, int y)
         {
             return (d.s[d.dl, x, y].rx2 - d.s[d.dl, x, y].rx1 - 1);
         }
@@ -170,7 +188,7 @@
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        private int room_height(byte x, byte y)
+        private int room_height(int x, int y)
         {
             return (d.s[d.dl, x, y].ry2 - d.s[d.dl, x, y].ry1 - 1);
         }
@@ -408,6 +426,379 @@
                     (dir == Direction.S && y < Config.NSECT_H - 1) ||
                     (dir == Direction.W && x > 0) ||
                     (dir == Direction.E && x < Config.NSECT_W - 1));
+        }
+
+
+        /// <summary>
+        /// Each level requires at least one stair!
+        /// </summary>
+        private void dig_stairs()
+        {
+            int sx;
+            int sy;
+            byte x;
+            byte y;
+
+            /* Dig stairs upwards. */
+
+            /* Find a section. */
+            get_random_section(out sx, out sy);
+
+            d.stxu[d.dl] = (byte) (d.s[d.dl, sx, sy].rx1 + rand_byte(room_width(sx, sy) - 1) + 1);
+            d.styu[d.dl] = (byte) (d.s[d.dl, sx, sy].ry1 + rand_byte(room_height(sx, sy) - 1) + 1);
+
+            /* Dig stairs downwards. */
+            if (d.dl < Config.MAX_DUNGEON_LEVEL - 1)
+            {
+                /* Find a section. */
+                get_random_section(out sx, out sy);
+
+                /* Find a good location. */
+                do
+                {
+                    x = (byte) (d.s[d.dl, sx, sy].rx1 + rand_byte(room_width(sx, sy) - 1) + 1);
+                    y = (byte) (d.s[d.dl, sx, sy].ry1 + rand_byte(room_height(sx, sy) - 1) + 1);
+                } while (d.dl != 0 && x == d.stxu[d.dl] && y == d.styu[d.dl]);
+
+                /* Place the stairway. */
+                d.stxd[d.dl] = x;
+                d.styd[d.dl] = y;
+            }
+        }
+
+
+        /// <summary>
+        /// Find a random section on the current dungeon level.
+        /// </summary>
+        /// <param name="sx"></param>
+        /// <param name="sy"></param>
+        private void get_random_section(out int sx, out int sy)
+        {
+            do
+            {
+                sx = rand_int(Config.NSECT_W);
+                sy = rand_int(Config.NSECT_H);
+            } while (!d.s[d.dl, sx, sy].exists);
+        }
+
+        /// <summary>
+        /// Check whether a given position is accessible.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        private bool is_open(int x, int y)
+        {
+            switch ((char) map[x, y])
+            {
+                case Tiles.ROCK:
+                case Tiles.LOCKED_DOOR:
+                case Tiles.CLOSED_DOOR:
+                    return false;
+
+                default:
+                    return true;
+            }
+        }
+
+
+        /// <summary>
+        /// Check whether a given position might be accessible.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        private bool might_be_open(int x, int y)
+        {
+            switch ((char) map[x, y])
+            {
+                case Tiles.ROCK:
+                    return false;
+
+                default:
+                    return true;
+            }
+        }
+
+
+        /// <summary>
+        /// Memorize a new location.
+        /// 
+        /// This has two effects: the position is known to you (and will be for
+        /// the rest of the game barring magical effects) and it will be displayed
+        /// on the screen.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        private void know(int x, int y)
+        {
+            if (is_known(x, y))
+                return;
+
+            set_knowledge((byte) x, (byte) y, 1);
+            print_tile(x, y);
+        }
+
+
+        /// <summary>
+        /// This function prints the tile at position (x, y) on the screen.
+        /// If necessary the map will be scrolled in 'map_cursor'.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        private void print_tile(int x, int y)
+        {
+            map_cursor(x, y);
+            print_tile_at_position(x, y);
+        }
+
+
+/*
+ * Print the tile at position (x, y) to the current screen position.
+ *
+ * NOTE: Monsters and items also need to be considered in this function.
+ */
+
+        private void print_tile_at_position(int x, int y)
+        {
+            if (x < 0 || y < 0 || x > Config.MAP_W || y > Config.MAP_H || !is_known(x, y))
+            {
+                Terminal.set_color(Color.Black);
+                Terminal.prtchar(' ');
+            }
+            else
+            {
+                if (is_monster_at(x, y) && los(x, y))
+                {
+                    monster m = get_monster_at(x, y);
+
+                    Terminal.set_color(monster_color(m->midx));
+                    Terminal.prtchar(monster_tile(m->midx));
+                }
+                else
+                {
+                    set_color_for_tile((char)map[x, y]);
+                    Terminal.prtchar(map[x, y]);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Makes a complete scetion known.
+        /// 
+        /// This function is usually called when a room is entered. 
+        /// </summary>
+        /// <param name="sx"></param>
+        /// <param name="sy"></param>
+        private void know_section(int sx, int sy)
+        {
+            int x, y;
+
+            for (y = d.s[d.dl, sx, sy].ry1;
+                 y <= d.s[d.dl, sx, sy].ry2;
+                 y++)
+                for (x = d.s[d.dl, sx, sy].rx1;
+                     x <= d.s[d.dl, sx, sy].rx2;
+                     x++)
+                    know(x, y);
+        }
+
+        /// <summary>
+        /// Calculate the current section coordinates.
+        /// </summary>
+        /// <param name="px"></param>
+        /// <param name="py"></param>
+        /// <param name="sx"></param>
+        /// <param name="sy"></param>
+        private void get_current_section_coordinates(int px, int py, out int sx, out int sy)
+        {
+            sx = px/Config.SECT_W;
+            sy = py/Config.SECT_H;
+        }
+
+        /// <summary>
+        /// Calculate the current section coordinates *if* the current section contains a room and the given position is in that room.
+        /// </summary>
+        /// <param name="px"></param>
+        /// <param name="py"></param>
+        /// <param name="sx"></param>
+        /// <param name="sy"></param>
+        private void get_current_section(int px, int py, out int sx, out int sy)
+        {
+            get_current_section_coordinates(px, py, out sx, out sy);
+
+            if (!d.s[d.dl, sx, sy].exists ||
+                px < d.s[d.dl, sx, sy].rx1 ||
+                px > d.s[d.dl, sx, sy].rx2 ||
+                py < d.s[d.dl, sx, sy].ry1 ||
+                py > d.s[d.dl, sx, sy].ry2)
+            {
+                sx = -1;
+                sy = -1;
+            }
+        }
+
+        /// <summary>
+        /// Return the tile at position (x, y).
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        private char tile_at(int x, int y)
+        {
+            return (char) map[x, y];
+        }
+
+        /// <summary>
+        /// Completely redraw the map.  
+        /// Take also care of the visible panel area. 
+        /// 
+        /// Note: it's important that 'map_cursor' is not called in this function since 'map_cursor' scrolls the screen if this is necessary.  Scrolling the screen entails a call to 'paint_map' and you'd have an endless loop.
+        /// </summary>
+        private void paint_map()
+        {
+            int x, y;
+
+            /* Paint the map line by line. */
+            for (y = d.psy*Config.SECT_H; y < d.psy*Config.SECT_H + Config.VMAP_H; y++)
+            {
+                Terminal.cursor(0, 1 + y - d.psy*Config.SECT_H);
+                for (x = d.psx*Config.SECT_W; x < d.psx*Config.SECT_W + Config.VMAP_W; x++)
+                    print_tile_at_position(x, y);
+            }
+
+            /* Update the screen. */
+            Terminal.update();
+        }
+
+        /// <summary>
+        /// Set a color determined by the type of tile to be printed.
+        /// </summary>
+        /// <param name="tile"></param>
+        private void set_color_for_tile(char tile)
+        {
+            switch (tile)
+            {
+                case Tiles.ROCK:
+                    Terminal.set_color(Color.DarkGray);
+                    break;
+                case Tiles.FLOOR:
+                    Terminal.set_color(Color.LightGray);
+                    break;
+                case Tiles.STAIR_UP:
+                case Tiles.STAIR_DOWN:
+                    Terminal.set_color(Color.White);
+                    break;
+                default:
+                    Terminal.set_color(Color.Brown);
+                    break;
+            }
+        }
+
+
+        /// <summary>
+        /// Set the screen cursor based upon the map coordinates. If necessary the screen map will be scrolled to show the current map position on the screen.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        private void map_cursor(int x, int y)
+        {
+            bool change = false;
+            bool any_change = false;
+            int xp, yp;
+
+            do
+            {
+                /* Any display change necessary? */
+                any_change |= change;
+                change = false;
+
+                /* Determine the screen coordinates for the map coordinates. */
+                xp = x - d.psx*Config.SECT_W;
+                yp = y - d.psy*Config.SECT_H + 1;
+
+                /* Check scrolling to the right. */
+                if (yp < 1)
+                {
+                    d.psy--;
+                    change = true;
+                }
+                    /* Check scrolling to the left. */
+                else if (yp >= Config.VMAP_H)
+                {
+                    d.psy++;
+                    change = true;
+                }
+                /* Check scrolling downwards. */
+                if (xp < 1)
+                {
+                    d.psx--;
+                    change = true;
+                }
+                    /* Check scrolling upwards. */
+                else if (xp >= Config.VMAP_W)
+                {
+                    d.psx++;
+                    change = true;
+                }
+            } while (change);
+
+            /* Scroll the map if required to do so. */
+            if (any_change)
+                paint_map();
+
+            /* Set the cursor. */
+            Terminal.cursor(xp, yp);
+        }
+
+
+        /// <summary>
+        /// Change a door at a given position to another type of door.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="door"></param>
+        private void change_door(int x, int y, byte door)
+        {
+            int sx, sy;
+            byte i;
+
+            get_current_section_coordinates(x, y, out sx, out sy);
+
+            for (i = 0; i < 4; i++)
+                if (d.s[d.dl, sx, sy].dx[i] == x && d.s[d.dl, sx, sy].dy[i] == y)
+                {
+                    d.s[d.dl, sx, sy].dt[i] = door;
+                    map[x, y] = door;
+                    set_knowledge((byte) x, (byte) y, 0);
+                    know(x, y);
+                }
+        }
+
+        /// <summary>
+        /// Determine whether a given position is already known.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        /// <remarks>NOTE: The knowledge map is saved in a bit field to save some memory.</remarks>
+        private bool is_known(int x, int y)
+        {
+            return (d.known[d.dl, x >> 3, y] & (1 << (x%8))) > 0;
+        }
+
+        /// <summary>
+        /// Set or reset a knowledge bit in the knowledge map.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="known"></param>
+        private void set_knowledge(byte x, byte y, byte known)
+        {
+            if (known > 0)
+                d.known[d.dl, x >> 3, y] |= (byte) (1 << (x%8));
+            else
+                d.known[d.dl, x >> 3, y] &= (byte) (~(1 << (x%8)));
         }
     }
 }

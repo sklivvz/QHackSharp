@@ -73,25 +73,30 @@ namespace HackSharp
             return;
         }
 
+        private static void stdprtstr(string message)
+        {
+            Console.Write(message);
+        }
+
 
         /// <summary>
         /// Draw a title screen.
         /// </summary>
         private static void InitScreen()
         {
-            clear_screen();
+            Terminal.clear_screen();
             string s = String.Format("-----====<<<<< QHack {0}.{1} >>>>>====-----", Config.MAJOR_VERSION, Config.MINOR_VERSION);
-            cursor((80 - s.Length) >> 1, 3);
-            prtstr("%s", s);
-            cursor(16, 5);
-            prtstr("(The Quickest Roguelike Gaming Hack on the Net)");
-            cursor(19, 8);
-            prtstr("(C) Copyright 1996, 1997 by Thomas Biskup.");
-            cursor(30, 9);
-            prtstr("All Rights Reserved.");
-            cursor(0, 24);
-            prtstr("Email comments/suggestions/bug reports to ............... rpg@saranxis.ruhr.de");
-            getkey();
+            Terminal.cursor((80 - s.Length) >> 1, 3);
+            Terminal.prtstr("%s", s);
+            Terminal.cursor(16, 5);
+            Terminal.prtstr("(The Quickest Roguelike Gaming Hack on the Net)");
+            Terminal.cursor(19, 8);
+            Terminal.prtstr("(C) Copyright 1996, 1997 by Thomas Biskup.");
+            Terminal.cursor(30, 9);
+            Terminal.prtstr("All Rights Reserved.");
+            Terminal.cursor(0, 24);
+            Terminal.prtstr("Email comments/suggestions/bug reports to ............... rpg@saranxis.ruhr.de");
+            Terminal.getkey();
         }
     }
 }
