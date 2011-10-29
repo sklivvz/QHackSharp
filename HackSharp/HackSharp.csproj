@@ -50,6 +50,7 @@
     <Compile Include="Dungeon.cs" />
     <Compile Include="DungeonComplex.cs" />
     <Compile Include="Error.cs" />
+    <Compile Include="Game.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

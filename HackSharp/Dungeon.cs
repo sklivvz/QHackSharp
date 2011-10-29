@@ -220,7 +220,7 @@ namespace HackSharp
         /// are not possible since the level desciptions have now way of recording
         /// them.
         /// </summary>
-        private void build_map()
+        internal void build_map()
         {
             int x;
             int y;
@@ -487,7 +487,7 @@ namespace HackSharp
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        private bool is_open(int x, int y)
+        internal bool is_open(int x, int y)
         {
             switch ((char) map[x, y])
             {
@@ -508,7 +508,7 @@ namespace HackSharp
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        private bool might_be_open(int x, int y)
+        internal bool might_be_open(int x, int y)
         {
             switch ((char) map[x, y])
             {
@@ -530,7 +530,7 @@ namespace HackSharp
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        private void know(int x, int y)
+        internal void know(int x, int y)
         {
             if (is_known(x, y))
                 return;
@@ -590,7 +590,7 @@ namespace HackSharp
         /// </summary>
         /// <param name="sx"></param>
         /// <param name="sy"></param>
-        private void know_section(int sx, int sy)
+        internal void know_section(int sx, int sy)
         {
             int x, y;
 
@@ -610,7 +610,7 @@ namespace HackSharp
         /// <param name="py"></param>
         /// <param name="sx"></param>
         /// <param name="sy"></param>
-        private void get_current_section_coordinates(int px, int py, out int sx, out int sy)
+        internal void get_current_section_coordinates(int px, int py, out int sx, out int sy)
         {
             sx = px/Config.SECT_W;
             sy = py/Config.SECT_H;
@@ -623,7 +623,7 @@ namespace HackSharp
         /// <param name="py"></param>
         /// <param name="sx"></param>
         /// <param name="sy"></param>
-        private void get_current_section(int px, int py, out int sx, out int sy)
+        internal void get_current_section(int px, int py, out int sx, out int sy)
         {
             get_current_section_coordinates(px, py, out sx, out sy);
 
@@ -644,7 +644,7 @@ namespace HackSharp
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        private char tile_at(int x, int y)
+        internal char tile_at(int x, int y)
         {
             return (char) map[x, y];
         }
@@ -758,7 +758,7 @@ namespace HackSharp
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <param name="door"></param>
-        private void change_door(int x, int y, byte door)
+        internal void change_door(int x, int y, char door)
         {
             int sx, sy;
             byte i;
@@ -768,8 +768,8 @@ namespace HackSharp
             for (i = 0; i < 4; i++)
                 if (d.s[d.dl, sx, sy].dx[i] == x && d.s[d.dl, sx, sy].dy[i] == y)
                 {
-                    d.s[d.dl, sx, sy].dt[i] = door;
-                    map[x, y] = door;
+                    d.s[d.dl, sx, sy].dt[i] = (byte) door;
+                    map[x, y] = (byte) door;
                     set_knowledge((byte) x, (byte) y, 0);
                     know(x, y);
                 }

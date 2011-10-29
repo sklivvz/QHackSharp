@@ -29,7 +29,7 @@ namespace HackSharp
             throw new System.NotImplementedException();
         }
 
-        public static void getkey()
+        public static char getkey()
         {
             throw new System.NotImplementedException();
         }

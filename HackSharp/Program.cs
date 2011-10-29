@@ -64,7 +64,8 @@ namespace HackSharp
             InitScreen();
 
             /* Play the game. */
-            play();
+            var game = new Game(dungeon);
+            game.play();
 
             /* Clean up. */
             clean_up_io();

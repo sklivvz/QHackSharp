@@ -33,18 +33,18 @@ namespace HackSharp
     public class DungeonComplex
     {
         /* The current level number. */
-        public byte dl;
+        public int dl;
 
         /* Last player Coordinates. */
-        public byte opx;
-        public byte opy;
+        public int opx;
+        public int opy;
 
 
         /* The panel positions. */
         public byte psx;
         public byte psy;
-        public byte px;
-        public byte py;
+        public int px;
+        public int py;
         public byte[] stxd; // [MAX_DUNGEON_LEVEL - 1];
         public byte[] stxu; // [MAX_DUNGEON_LEVEL];
         public byte[] styd; // [MAX_DUNGEON_LEVEL - 1];
