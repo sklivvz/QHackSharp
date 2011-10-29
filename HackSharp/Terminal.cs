@@ -49,5 +49,10 @@ namespace HackSharp
         {
             throw new NotImplementedException();
         }
+
+        public static void prtstr(string format, params object[] values)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

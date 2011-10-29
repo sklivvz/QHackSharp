@@ -228,7 +228,7 @@ namespace HackSharp
             }
             while (_dungeon.tile_at(x, y) != Tiles.FLOOR ||
                    los(x, y) ||
-                   midx[x,y] != -1);
+                   midx[x,y] != 255);
         }
 
         /// <summary>
@@ -285,7 +285,7 @@ namespace HackSharp
         internal monster get_monster_at(int x, int y)
         {
             /* Paranoia. */
-            if (midx[x,y] == -1)
+            if (midx[x,y] == 255)
                 Error.die("No monster to retrieve");
 
             /* Return the requested monster. */
@@ -322,7 +322,7 @@ namespace HackSharp
         /// <returns></returns>
         internal bool is_monster_at(int x, int y)
         {
-            return (midx[x,y] != -1);
+            return (midx[x,y] != 255);
         }
 
         /// <summary>

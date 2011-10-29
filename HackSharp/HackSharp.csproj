@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="attributes.cs" />
     <Compile Include="Direction.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Coord.cs" />
@@ -64,6 +65,7 @@
     <Compile Include="Section.cs" />
     <Compile Include="Terminal.cs" />
     <Compile Include="Tiles.cs" />
+    <Compile Include="tskills.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

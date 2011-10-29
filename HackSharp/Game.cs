@@ -81,7 +81,7 @@ namespace HackSharp
             {
                 /* Print all the new things. */
                 update_screen(d.px, d.py);
-                update_player_status();
+                _dungeon.d.pc.update_player_status();
 
                 /* Display the player and center the cursor. */
                 map_cursor(d.px, d.py);
@@ -110,7 +110,7 @@ namespace HackSharp
                 switch (c)
                 {
                     case 'T':
-                        adjust_training();
+                        _dungeon.d.pc.adjust_training();
                         break;
 
                     case 'o':
@@ -386,10 +386,10 @@ namespace HackSharp
         /// </summary>
         private void redraw()
         {
-            clear_messages();
+            Misc.clear_messages();
             _dungeon.paint_map();
-            update_necessary = true;
-            update_player_status();
+            _dungeon.d.pc.update_necessary = true;
+            _dungeon.d.pc.update_player_status();
             Terminal.update();
         }
 
@@ -419,7 +419,7 @@ namespace HackSharp
                 d.visited[d.dl] = true;
 
                 /* Score some experience for exploring unknown depths. */
-                score_exp(d.dl);
+                _dungeon.d.pc.score_exp(d.dl);
             }
 
             /* Place monsters in the appropriate positions. */
