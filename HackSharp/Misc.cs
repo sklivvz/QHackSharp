@@ -163,7 +163,7 @@ namespace HackSharp
                 int.TryParse(match.Groups[3].Value, out bonus);
 
             for (int i = 0; i < amount; i++)
-                roll += rand_byte(sides) + 1;
+                roll += Terminal.rand_int(sides) + 1;
 
             return roll + bonus;
         }

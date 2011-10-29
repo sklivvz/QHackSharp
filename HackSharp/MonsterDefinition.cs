@@ -5,33 +5,33 @@ namespace HackSharp
     /// <summary>
     /// The structure for a basic monster.
     /// </summary>
-    class monster_def
+    class MonsterDefinition
     {
         /* The character symbol. */
-        internal char symbol;
+        public char Symbol { get; set; }
 
         /* The color of the monster. */
-        internal ConsoleColor color;
+        internal ConsoleColor Color { get; set; }
 
         /* Its name. */
-        internal string name;
+        internal string Name { get; set; }
 
         /* Armor class. */
-        internal int ac;
+        internal int ArmorClass { get; set; }
 
         /* Initial hitpoints. */
-        internal string hits;
+        internal string Hits { get; set; }
 
         /* Number of attacks. */
-        internal int attacks;
+        internal int Attacks { get; set; }
 
         /* To-hit bonus. */
-        internal int to_hit;
+        internal int ToHit { get; set; }
 
         /* Damage dice. */
-        internal string damage;
+        internal string Damage { get; set; }
 
         /* Frequency for the basic level. */
-        internal monster_rarity rarity;
+        internal MonsterRarity Rarity { get; set; }
     };
 }

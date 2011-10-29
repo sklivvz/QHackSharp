@@ -28,23 +28,23 @@ namespace HackSharp
     /// <summary>
     /// A structure for a given monster.
     /// </summary>
-    struct monster
+    struct Monster
     {
         /* Is the entry occupied by a monster? */
-        internal bool used;
+        internal bool Used { get; set; }
 
         /* Monster type. */
-        internal int midx;
+        internal int Midx { get; set; }
 
         /* Position on the map. */
-        internal int x;
-        internal int y;
+        internal int X { get; set; }
+        internal int Y { get; set; }
 
         /* Hitpoint data. */
-        internal int hp;
-        internal int max_hp;
+        internal int Hp { get; set; }
+        internal int MaxHp { get; set; }
 
         /* The current state (see above). */
-        internal monster_state state;
+        internal MonsterState State { get; set; }
     };
 }

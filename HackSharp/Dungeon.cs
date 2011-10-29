@@ -1,58 +1,60 @@
 ﻿using System;
-using System.Drawing;
 
 namespace HackSharp
 {
     internal class Dungeon
     {
-        public static byte existence_chance;
-        public static byte[,] map = new byte[Config.MAP_W,Config.MAP_H];
-        public DungeonComplex d = new DungeonComplex();
+        public static byte ExistenceChance;
+        public static byte[,] Map = new byte[Config.MAP_W,Config.MAP_H];
+        public Complex Complex = new Complex();
         private Monsters _monsters;
 
         /// <summary>
         /// Define all the basic dungeon structures and create the complete dungeon map.
         /// </summary>
         /// <param name="monsters"></param>
-        public void init_dungeon(Monsters monsters)
+        /// <param name="player"></param>
+        public void InitDungeon(Monsters monsters, Player player)
         {
             if (monsters == null) throw new ArgumentNullException("monsters");
+            if (player == null) throw new ArgumentNullException("player");
             _monsters = monsters;
-            create_complete_dungeon();
+            Complex.ThePlayer = player;
+            CreateCompleteDungeon();
         }
 
         /// <summary>
         /// Create all the levels in the dungeon.
         /// </summary>
-        private void create_complete_dungeon()
+        private void CreateCompleteDungeon()
         {
-            for (d.dl = 0; d.dl < Config.MAX_DUNGEON_LEVEL; d.dl++)
+            for (Complex.DungeonLevel = 0; Complex.DungeonLevel < Config.MAX_DUNGEON_LEVEL; Complex.DungeonLevel++)
             {
                 /* Basic initialization. */
 
                 /* Nothing is known about the dungeon at this point. */
                 for (byte x = 0; x < Config.MAP_W; x++)
                     for (byte y = 0; y < Config.MAP_H; y++)
-                        set_knowledge(x, y, 0);
+                        SetKnowledge(x, y, 0);
 
                 /* Create the current level map. */
-                dig_level();
+                DigLevel();
 
                 /* Note the current level as unvisited. */
-                d.visited[d.dl] = false;
+                Complex.Visited[Complex.DungeonLevel] = false;
             }
         }
 
         /// <summary>
         /// Create one single dungeon level.
         /// </summary>
-        private void dig_level()
+        private void DigLevel()
         {
             byte w;
             byte h;
             var sectx = new byte[Config.SECT_NUMBER];
             var secty = new byte[Config.SECT_NUMBER];
-            var index = new short[Config.SECT_NUMBER];
+            var index = new int[Config.SECT_NUMBER];
 
             // Determine a random order for the section generation.
             /* Initial order. */
@@ -69,46 +71,42 @@ namespace HackSharp
             /* Randomly shuffle the initial order. */
             for (i = 0; i < Config.SECT_NUMBER; i++)
             {
-                short j = rand_int(Config.SECT_NUMBER);
-                short k = rand_int(Config.SECT_NUMBER);
-                short dummy = index[j];
+                int j = Terminal.rand_int(Config.SECT_NUMBER);
+                int k = Terminal.rand_int(Config.SECT_NUMBER);
+                int dummy = index[j];
                 index[j] = index[k];
                 index[k] = dummy;
             }
             //Create each section separately.
 
             /* Initially there is a 30% chance for rooms to be non-existant. */
-            existence_chance = 70;
+            ExistenceChance = 70;
 
             /* Dig each section. */
             for (i = 0; i < Config.SECT_NUMBER; i++)
-                dig_section(sectx[index[i]], secty[index[i]]);
+                DigSection(sectx[index[i]], secty[index[i]]);
 
             /* Build some stairs. */
-            dig_stairs();
+            DigStairs();
         }
 
-        private byte rand_int(int sectNumber)
-        {
-            throw new NotImplementedException();
-        }
 
-        private void dig_section(byte x, byte y)
+        private void DigSection(byte x, byte y)
         {
-            if (rand_byte(100) + 1 >= existence_chance)
+            if (Terminal.rand_byte(100) + 1 >= ExistenceChance)
             {
                 /* No room here. */
-                d.s[d.dl, x, y].exists = false;
+                Complex.s[Complex.DungeonLevel, x, y].exists = false;
 
                 /* Decrease the chance for further empty rooms. */
-                existence_chance += 3;
+                ExistenceChance += 3;
             }
             else
             {
                 Direction dir;
 
                 /* Yeah :-) ! */
-                d.s[d.dl, x, y].exists = true;
+                Complex.s[Complex.DungeonLevel, x, y].exists = true;
 
                 /*
                  * Dig a room.
@@ -118,13 +116,13 @@ namespace HackSharp
 
                 do
                 {
-                    d.s[d.dl, x, y].rx1 = (byte) (x*Config.SECT_W + rand_byte(3) + 1);
-                    d.s[d.dl, x, y].ry1 = (byte) (y*Config.SECT_H + rand_byte(3) + 1);
-                    d.s[d.dl, x, y].rx2 = (byte) ((x + 1)*Config.SECT_W - rand_byte(3) - 2);
-                    d.s[d.dl, x, y].ry2 = (byte) ((y + 1)*Config.SECT_H - rand_byte(3) - 2);
-                } while (d.s[d.dl, x, y].rx2 - d.s[d.dl, x, y].rx1
+                    Complex.s[Complex.DungeonLevel, x, y].rx1 = (byte) (x*Config.SECT_W + Terminal.rand_byte(3) + 1);
+                    Complex.s[Complex.DungeonLevel, x, y].ry1 = (byte) (y*Config.SECT_H + Terminal.rand_byte(3) + 1);
+                    Complex.s[Complex.DungeonLevel, x, y].rx2 = (byte) ((x + 1)*Config.SECT_W - Terminal.rand_byte(3) - 2);
+                    Complex.s[Complex.DungeonLevel, x, y].ry2 = (byte) ((y + 1)*Config.SECT_H - Terminal.rand_byte(3) - 2);
+                } while (Complex.s[Complex.DungeonLevel, x, y].rx2 - Complex.s[Complex.DungeonLevel, x, y].rx1
                          < 3 ||
-                         d.s[d.dl, x, y].ry2 - d.s[d.dl, x, y].ry1
+                         Complex.s[Complex.DungeonLevel, x, y].ry2 - Complex.s[Complex.DungeonLevel, x, y].ry1
                          < 3);
 
                 /*
@@ -135,45 +133,49 @@ namespace HackSharp
                  */
 
                 for (dir = Direction.N; dir <= Direction.E; dir++)
-                    if (dir_possible(x, y, dir))
+                    if (IsDirectionPossible(x, y, dir))
                     {
                         switch (dir)
                         {
                             case Direction.N:
-                                d.s[d.dl, x, y].dx[(int) dir] =
-                                    (byte) (d.s[d.dl, x, y].rx1 + rand_byte(room_width(x, y) - 1) + 1);
-                                d.s[d.dl, x, y].dy[(int) dir] = d.s[d.dl, x, y].ry1;
+                                Complex.s[Complex.DungeonLevel, x, y].dx[(int) dir] =
+                                    (byte)
+                                    (Complex.s[Complex.DungeonLevel, x, y].rx1 + Terminal.rand_byte((byte) (RoomWidth(x, y) - 1)) +
+                                     1);
+                                Complex.s[Complex.DungeonLevel, x, y].dy[(int) dir] = Complex.s[Complex.DungeonLevel, x, y].ry1;
                                 break;
 
                             case Direction.S:
-                                d.s[d.dl, x, y].dx[(int) dir] =
-                                    (byte) (d.s[d.dl, x, y].rx1 + rand_byte(room_width(x, y) - 1) + 1);
-                                d.s[d.dl, x, y].dy[(int) dir] = d.s[d.dl, x, y].ry2;
+                                Complex.s[Complex.DungeonLevel, x, y].dx[(int) dir] =
+                                    (byte)
+                                    (Complex.s[Complex.DungeonLevel, x, y].rx1 + Terminal.rand_byte((byte) (RoomWidth(x, y) - 1)) +
+                                     1);
+                                Complex.s[Complex.DungeonLevel, x, y].dy[(int) dir] = Complex.s[Complex.DungeonLevel, x, y].ry2;
                                 break;
 
                             case Direction.E:
-                                d.s[d.dl, x, y].dy[(int) dir] =
-                                    (byte) (d.s[d.dl, x, y].ry1 + rand_byte(room_height(x, y) - 1) + 1);
-                                d.s[d.dl, x, y].dx[(int) dir] = d.s[d.dl, x, y].rx2;
+                                Complex.s[Complex.DungeonLevel, x, y].dy[(int) dir] =
+                                    (byte)
+                                    (Complex.s[Complex.DungeonLevel, x, y].ry1 + Terminal.rand_byte((byte) (RoomHeight(x, y) - 1)) +
+                                     1);
+                                Complex.s[Complex.DungeonLevel, x, y].dx[(int) dir] = Complex.s[Complex.DungeonLevel, x, y].rx2;
                                 break;
 
                             case Direction.W:
-                                d.s[d.dl, x, y].dy[(int) dir] =
-                                    (byte) (d.s[d.dl, x, y].ry1 + rand_byte(room_height(x, y) - 1) + 1);
-                                d.s[d.dl, x, y].dx[(int) dir] = d.s[d.dl, x, y].rx1;
+                                Complex.s[Complex.DungeonLevel, x, y].dy[(int) dir] =
+                                    (byte)
+                                    (Complex.s[Complex.DungeonLevel, x, y].ry1 + Terminal.rand_byte((byte) (RoomHeight(x, y) - 1)) +
+                                     1);
+                                Complex.s[Complex.DungeonLevel, x, y].dx[(int) dir] = Complex.s[Complex.DungeonLevel, x, y].rx1;
                                 break;
                         }
-                        d.s[d.dl, x, y].dt[(int) dir] = rand_door();
+                        Complex.s[Complex.DungeonLevel, x, y].dt[(int) dir] = RandDoor();
                     }
                     else
-                        d.s[d.dl, x, y].dt[(int) dir] = Tiles.NO_DOOR;
+                        Complex.s[Complex.DungeonLevel, x, y].dt[(int) dir] = Tiles.NO_DOOR;
             }
         }
 
-        private byte rand_byte(int p0)
-        {
-            throw new NotImplementedException();
-        }
 
         /// <summary>
         /// Calculate the room width for a specific room section at (x, y).
@@ -181,9 +183,9 @@ namespace HackSharp
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        private int room_width(int x, int y)
+        private byte RoomWidth(int x, int y)
         {
-            return (d.s[d.dl, x, y].rx2 - d.s[d.dl, x, y].rx1 - 1);
+            return (byte) (Complex.s[Complex.DungeonLevel, x, y].rx2 - Complex.s[Complex.DungeonLevel, x, y].rx1 - 1);
         }
 
         /// <summary>
@@ -192,18 +194,18 @@ namespace HackSharp
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        private int room_height(int x, int y)
+        private byte RoomHeight(int x, int y)
         {
-            return (d.s[d.dl, x, y].ry2 - d.s[d.dl, x, y].ry1 - 1);
+            return (byte) (Complex.s[Complex.DungeonLevel, x, y].ry2 - Complex.s[Complex.DungeonLevel, x, y].ry1 - 1);
         }
 
         /// <summary>
         /// Determine a random door type.
         /// </summary>
         /// <returns></returns>
-        private byte rand_door()
+        private byte RandDoor()
         {
-            byte roll = rand_byte(100);
+            byte roll = Terminal.rand_byte(100);
 
             if (roll < 75)
                 return (byte) Tiles.OPEN_DOOR;
@@ -224,7 +226,7 @@ namespace HackSharp
         /// are not possible since the level desciptions have now way of recording
         /// them.
         /// </summary>
-        internal void build_map()
+        internal void BuildMap()
         {
             int x;
             int y;
@@ -234,30 +236,30 @@ namespace HackSharp
             /* Basic initialization. */
             for (x = 0; x < Config.MAP_W; x++)
                 for (y = 0; y < Config.MAP_H; y++)
-                    map[x, y] = (byte) Tiles.ROCK;
+                    Map[x, y] = (byte) Tiles.ROCK;
 
             /* Build each section. */
             for (sx = 0; sx < Config.NSECT_W; sx++)
                 for (sy = 0; sy < Config.NSECT_H; sy++)
                 {
                     /* Handle each section. */
-                    if (d.s[d.dl, sx, sy].exists)
+                    if (Complex.s[Complex.DungeonLevel, sx, sy].exists)
                     {
                         /* Paint existing room. */
-                        for (x = d.s[d.dl, sx, sy].rx1 + 1;
-                             x < d.s[d.dl, sx, sy].rx2;
+                        for (x = Complex.s[Complex.DungeonLevel, sx, sy].rx1 + 1;
+                             x < Complex.s[Complex.DungeonLevel, sx, sy].rx2;
                              x++)
-                            for (y = d.s[d.dl, sx, sy].ry1 + 1;
-                                 y < d.s[d.dl, sx, sy].ry2;
+                            for (y = Complex.s[Complex.DungeonLevel, sx, sy].ry1 + 1;
+                                 y < Complex.s[Complex.DungeonLevel, sx, sy].ry2;
                                  y++)
-                                map[x, y] = (byte) Tiles.FLOOR;
+                                Map[x, y] = (byte) Tiles.FLOOR;
 
                         /* Paint doors. */
                         byte dir;
                         for (dir = (byte) Direction.N; dir <= (byte) Direction.E; dir++)
-                            if (d.s[d.dl, sx, sy].dt[dir] != Tiles.NO_DOOR)
-                                map[d.s[d.dl, sx, sy].dx[dir], d.s[d.dl, sx, sy].dy[dir]]
-                                    = d.s[d.dl, sx, sy].dt[dir];
+                            if (Complex.s[Complex.DungeonLevel, sx, sy].dt[dir] != Tiles.NO_DOOR)
+                                Map[Complex.s[Complex.DungeonLevel, sx, sy].dx[dir], Complex.s[Complex.DungeonLevel, sx, sy].dy[dir]]
+                                    = Complex.s[Complex.DungeonLevel, sx, sy].dt[dir];
                     }
                 }
 
@@ -266,16 +268,16 @@ namespace HackSharp
             for (sx = 0; sx < Config.NSECT_W; sx++)
                 for (sy = 0; sy < Config.NSECT_H; sy++)
                 {
-                    if (dir_possible(sx, sy, Direction.E))
-                        connect_sections(sx, sy, sx + 1, sy, (int) Direction.E);
-                    if (dir_possible(sx, sy, Direction.S))
-                        connect_sections(sx, sy, sx, sy + 1, (int) Direction.S);
+                    if (IsDirectionPossible(sx, sy, Direction.E))
+                        ConnectSections(sx, sy, sx + 1, sy, Direction.E);
+                    if (IsDirectionPossible(sx, sy, Direction.S))
+                        ConnectSections(sx, sy, sx, sy + 1, Direction.S);
                 }
 
             /* Place the stairways. */
-            map[d.stxu[d.dl], d.styu[d.dl]] = (byte) Tiles.STAIR_UP;
-            if (d.dl < Config.MAX_DUNGEON_LEVEL - 1)
-                map[d.stxd[d.dl], d.styd[d.dl]] = (byte) Tiles.STAIR_DOWN;
+            Map[Complex.stxu[Complex.DungeonLevel], Complex.styu[Complex.DungeonLevel]] = (byte) Tiles.STAIR_UP;
+            if (Complex.DungeonLevel < Config.MAX_DUNGEON_LEVEL - 1)
+                Map[Complex.stxd[Complex.DungeonLevel], Complex.styd[Complex.DungeonLevel]] = (byte) Tiles.STAIR_DOWN;
         }
 
 
@@ -287,7 +289,7 @@ namespace HackSharp
         /// <param name="sx2"></param>
         /// <param name="sy2"></param>
         /// <param name="dir"></param>
-        private void connect_sections(int sx1, int sy1, int sx2, int sy2, int dir)
+        private void ConnectSections(int sx1, int sy1, int sx2, int sy2, Direction dir)
         {
             int cx1;
             int cy1;
@@ -295,17 +297,17 @@ namespace HackSharp
             int cy2;
 
             /* Get the start byteinates from section #1. */
-            if (d.s[d.dl, sx1, sy1].exists)
+            if (Complex.s[Complex.DungeonLevel, sx1, sy1].exists)
             {
-                if (dir == (byte) Direction.S)
+                if (dir == Direction.S)
                 {
-                    cx1 = d.s[d.dl, sx1, sy1].dx[(byte) Direction.S];
-                    cy1 = d.s[d.dl, sx1, sy1].dy[(byte) Direction.S];
+                    cx1 = Complex.s[Complex.DungeonLevel, sx1, sy1].dx[(byte) Direction.S];
+                    cy1 = Complex.s[Complex.DungeonLevel, sx1, sy1].dy[(byte) Direction.S];
                 }
                 else
                 {
-                    cx1 = d.s[d.dl, sx1, sy1].dx[(byte) Direction.E];
-                    cy1 = d.s[d.dl, sx1, sy1].dy[(byte) Direction.E];
+                    cx1 = Complex.s[Complex.DungeonLevel, sx1, sy1].dx[(byte) Direction.E];
+                    cy1 = Complex.s[Complex.DungeonLevel, sx1, sy1].dy[(byte) Direction.E];
                 }
             }
             else
@@ -315,17 +317,17 @@ namespace HackSharp
             }
 
             /* Get the end byteinates from section #2. */
-            if (d.s[d.dl, sx2, sy2].exists)
+            if (Complex.s[Complex.DungeonLevel, sx2, sy2].exists)
             {
-                if (dir == (byte) Direction.S)
+                if (dir == Direction.S)
                 {
-                    cx2 = d.s[d.dl, sx2, sy2].dx[(byte) Direction.N];
-                    cy2 = d.s[d.dl, sx2, sy2].dy[(byte) Direction.N];
+                    cx2 = Complex.s[Complex.DungeonLevel, sx2, sy2].dx[(byte) Direction.N];
+                    cy2 = Complex.s[Complex.DungeonLevel, sx2, sy2].dy[(byte) Direction.N];
                 }
                 else
                 {
-                    cx2 = d.s[d.dl, sx2, sy2].dx[(byte) Direction.W];
-                    cy2 = d.s[d.dl, sx2, sy2].dy[(byte) Direction.W];
+                    cx2 = Complex.s[Complex.DungeonLevel, sx2, sy2].dx[(byte) Direction.W];
+                    cy2 = Complex.s[Complex.DungeonLevel, sx2, sy2].dy[(byte) Direction.W];
                 }
             }
             else
@@ -341,13 +343,13 @@ namespace HackSharp
             /* Draw the tunnel. */
             int x = cx1;
             int y = cy1;
-            if (dir == (byte) Direction.E)
+            if (dir == Direction.E)
             {
                 /* Part #1. */
                 while (x < mx)
                 {
-                    if (map[x, y] == (byte) Tiles.ROCK)
-                        map[x, y] = (byte) Tiles.FLOOR;
+                    if (Map[x, y] == (byte) Tiles.ROCK)
+                        Map[x, y] = (byte) Tiles.FLOOR;
                     x++;
                 }
 
@@ -355,66 +357,66 @@ namespace HackSharp
                 if (y < cy2)
                     while (y < cy2)
                     {
-                        if (map[x, y] == (byte) Tiles.ROCK)
-                            map[x, y] = (byte) Tiles.FLOOR;
+                        if (Map[x, y] == (byte) Tiles.ROCK)
+                            Map[x, y] = (byte) Tiles.FLOOR;
                         y++;
                     }
                 else
                     while (y > cy2)
                     {
-                        if (map[x, y] == (byte) Tiles.ROCK)
-                            map[x, y] = (byte) Tiles.FLOOR;
+                        if (Map[x, y] == (byte) Tiles.ROCK)
+                            Map[x, y] = (byte) Tiles.FLOOR;
                         y--;
                     }
 
                 /* Part #3. */
                 while (x < cx2)
                 {
-                    if (map[x, y] == (byte) Tiles.ROCK)
-                        map[x, y] = (byte) Tiles.FLOOR;
+                    if (Map[x, y] == (byte) Tiles.ROCK)
+                        Map[x, y] = (byte) Tiles.FLOOR;
                     x++;
                 }
-                if (map[x, y] == (byte) Tiles.ROCK)
-                    map[x, y] = (byte) Tiles.FLOOR;
+                if (Map[x, y] == (byte) Tiles.ROCK)
+                    Map[x, y] = (byte) Tiles.FLOOR;
             }
             else
             {
                 /* Part #1. */
                 while (y < my)
                 {
-                    if (map[x, y] == (byte) Tiles.ROCK)
-                        map[x, y] = (byte) Tiles.FLOOR;
+                    if (Map[x, y] == (byte) Tiles.ROCK)
+                        Map[x, y] = (byte) Tiles.FLOOR;
                     y++;
                 }
-                if (map[x, y] == (byte) Tiles.ROCK)
-                    map[x, y] = (byte) Tiles.FLOOR;
+                if (Map[x, y] == (byte) Tiles.ROCK)
+                    Map[x, y] = (byte) Tiles.FLOOR;
 
                 /* Part #2. */
                 if (x < cx2)
                     while (x < cx2)
                     {
-                        if (map[x, y] == (byte) Tiles.ROCK)
-                            map[x, y] = (byte) Tiles.FLOOR;
+                        if (Map[x, y] == (byte) Tiles.ROCK)
+                            Map[x, y] = (byte) Tiles.FLOOR;
                         x++;
                     }
                 else
                     while (x > cx2)
                     {
-                        if (map[x, y] == (byte) Tiles.ROCK)
-                            map[x, y] = (byte) Tiles.FLOOR;
+                        if (Map[x, y] == (byte) Tiles.ROCK)
+                            Map[x, y] = (byte) Tiles.FLOOR;
                         x--;
                     }
 
                 /* Part #3. */
                 while (y < cy2)
                 {
-                    if (map[x, y] == (byte) Tiles.ROCK)
-                        map[x, y] = (byte) Tiles.FLOOR;
+                    if (Map[x, y] == (byte) Tiles.ROCK)
+                        Map[x, y] = (byte) Tiles.FLOOR;
                     y++;
                 }
             }
-            if (map[x, y] == (byte) Tiles.ROCK)
-                map[x, y] = (byte) Tiles.FLOOR;
+            if (Map[x, y] == (byte) Tiles.ROCK)
+                Map[x, y] = (byte) Tiles.FLOOR;
         }
 
         /// <summary>
@@ -422,21 +424,21 @@ namespace HackSharp
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        /// <param name="dir"></param>
+        /// <param name="direction"></param>
         /// <returns></returns>
-        private bool dir_possible(int x, int y, Direction dir)
+        private bool IsDirectionPossible(int x, int y, Direction direction)
         {
-            return ((dir == Direction.N && y > 0) ||
-                    (dir == Direction.S && y < Config.NSECT_H - 1) ||
-                    (dir == Direction.W && x > 0) ||
-                    (dir == Direction.E && x < Config.NSECT_W - 1));
+            return ((direction == Direction.N && y > 0) ||
+                    (direction == Direction.S && y < Config.NSECT_H - 1) ||
+                    (direction == Direction.W && x > 0) ||
+                    (direction == Direction.E && x < Config.NSECT_W - 1));
         }
 
 
         /// <summary>
         /// Each level requires at least one stair!
         /// </summary>
-        private void dig_stairs()
+        private void DigStairs()
         {
             int sx;
             int sy;
@@ -446,27 +448,33 @@ namespace HackSharp
             /* Dig stairs upwards. */
 
             /* Find a section. */
-            get_random_section(out sx, out sy);
+            GetRandomSection(out sx, out sy);
 
-            d.stxu[d.dl] = (byte) (d.s[d.dl, sx, sy].rx1 + rand_byte(room_width(sx, sy) - 1) + 1);
-            d.styu[d.dl] = (byte) (d.s[d.dl, sx, sy].ry1 + rand_byte(room_height(sx, sy) - 1) + 1);
+            Complex.stxu[Complex.DungeonLevel] =
+                (byte) (Complex.s[Complex.DungeonLevel, sx, sy].rx1 + Terminal.rand_byte((byte) (RoomWidth(sx, sy) - 1)) + 1);
+            Complex.styu[Complex.DungeonLevel] =
+                (byte) (Complex.s[Complex.DungeonLevel, sx, sy].ry1 + Terminal.rand_byte((byte) (RoomHeight(sx, sy) - 1)) + 1);
 
             /* Dig stairs downwards. */
-            if (d.dl < Config.MAX_DUNGEON_LEVEL - 1)
+            if (Complex.DungeonLevel < Config.MAX_DUNGEON_LEVEL - 1)
             {
                 /* Find a section. */
-                get_random_section(out sx, out sy);
+                GetRandomSection(out sx, out sy);
 
                 /* Find a good location. */
                 do
                 {
-                    x = (byte) (d.s[d.dl, sx, sy].rx1 + rand_byte(room_width(sx, sy) - 1) + 1);
-                    y = (byte) (d.s[d.dl, sx, sy].ry1 + rand_byte(room_height(sx, sy) - 1) + 1);
-                } while (d.dl != 0 && x == d.stxu[d.dl] && y == d.styu[d.dl]);
+                    x =
+                        (byte)
+                        (Complex.s[Complex.DungeonLevel, sx, sy].rx1 + Terminal.rand_byte((byte) (RoomWidth(sx, sy) - 1)) + 1);
+                    y =
+                        (byte)
+                        (Complex.s[Complex.DungeonLevel, sx, sy].ry1 + Terminal.rand_byte((byte) (RoomHeight(sx, sy) - 1)) + 1);
+                } while (Complex.DungeonLevel != 0 && x == Complex.stxu[Complex.DungeonLevel] && y == Complex.styu[Complex.DungeonLevel]);
 
                 /* Place the stairway. */
-                d.stxd[d.dl] = x;
-                d.styd[d.dl] = y;
+                Complex.stxd[Complex.DungeonLevel] = x;
+                Complex.styd[Complex.DungeonLevel] = y;
             }
         }
 
@@ -476,13 +484,13 @@ namespace HackSharp
         /// </summary>
         /// <param name="sx"></param>
         /// <param name="sy"></param>
-        private void get_random_section(out int sx, out int sy)
+        private void GetRandomSection(out int sx, out int sy)
         {
             do
             {
-                sx = rand_int(Config.NSECT_W);
-                sy = rand_int(Config.NSECT_H);
-            } while (!d.s[d.dl, sx, sy].exists);
+                sx = Terminal.rand_int(Config.NSECT_W);
+                sy = Terminal.rand_int(Config.NSECT_H);
+            } while (!Complex.s[Complex.DungeonLevel, sx, sy].exists);
         }
 
         /// <summary>
@@ -491,9 +499,9 @@ namespace HackSharp
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        internal bool is_open(int x, int y)
+        internal bool IsOpen(int x, int y)
         {
-            switch ((char) map[x, y])
+            switch ((char) Map[x, y])
             {
                 case Tiles.ROCK:
                 case Tiles.LOCKED_DOOR:
@@ -512,9 +520,9 @@ namespace HackSharp
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        internal bool might_be_open(int x, int y)
+        internal bool MightBeOpen(int x, int y)
         {
-            switch ((char) map[x, y])
+            switch ((char) Map[x, y])
             {
                 case Tiles.ROCK:
                     return false;
@@ -534,13 +542,13 @@ namespace HackSharp
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        internal void know(int x, int y)
+        internal void Know(int x, int y)
         {
             if (is_known(x, y))
                 return;
 
-            set_knowledge((byte) x, (byte) y, 1);
-            print_tile(x, y);
+            SetKnowledge((byte) x, (byte) y, 1);
+            PrintTile(x, y);
         }
 
 
@@ -550,10 +558,10 @@ namespace HackSharp
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        internal void print_tile(int x, int y)
+        internal void PrintTile(int x, int y)
         {
             map_cursor(x, y);
-            print_tile_at_position(x, y);
+            PrintTileAtPosition(x, y);
         }
 
         /// <summary>
@@ -562,7 +570,7 @@ namespace HackSharp
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <remarks>Monsters and items also need to be considered in this function.</remarks>
-        private void print_tile_at_position(int x, int y)
+        private void PrintTileAtPosition(int x, int y)
         {
             if (x < 0 || y < 0 || x > Config.MAP_W || y > Config.MAP_H || !is_known(x, y))
             {
@@ -573,15 +581,15 @@ namespace HackSharp
             {
                 if (_monsters.is_monster_at(x, y) && _monsters.los(x, y))
                 {
-                    monster m = _monsters.get_monster_at(x, y);
+                    Monster m = _monsters.get_monster_at(x, y);
 
-                    Terminal.set_color(_monsters.monster_color(m.midx));
-                    Terminal.prtchar(_monsters.monster_tile(m.midx));
+                    Terminal.set_color(_monsters.monster_color(m.Midx));
+                    Terminal.prtchar(_monsters.monster_tile(m.Midx));
                 }
                 else
                 {
-                    set_color_for_tile((char)map[x, y]);
-                    Terminal.prtchar(map[x, y]);
+                    set_color_for_tile((char) Map[x, y]);
+                    Terminal.prtchar((char) Map[x, y]);
                 }
             }
         }
@@ -593,17 +601,17 @@ namespace HackSharp
         /// </summary>
         /// <param name="sx"></param>
         /// <param name="sy"></param>
-        internal void know_section(int sx, int sy)
+        internal void KnowSection(int sx, int sy)
         {
             int x, y;
 
-            for (y = d.s[d.dl, sx, sy].ry1;
-                 y <= d.s[d.dl, sx, sy].ry2;
+            for (y = Complex.s[Complex.DungeonLevel, sx, sy].ry1;
+                 y <= Complex.s[Complex.DungeonLevel, sx, sy].ry2;
                  y++)
-                for (x = d.s[d.dl, sx, sy].rx1;
-                     x <= d.s[d.dl, sx, sy].rx2;
+                for (x = Complex.s[Complex.DungeonLevel, sx, sy].rx1;
+                     x <= Complex.s[Complex.DungeonLevel, sx, sy].rx2;
                      x++)
-                    know(x, y);
+                    Know(x, y);
         }
 
         /// <summary>
@@ -613,7 +621,7 @@ namespace HackSharp
         /// <param name="py"></param>
         /// <param name="sx"></param>
         /// <param name="sy"></param>
-        internal void get_current_section_coordinates(int px, int py, out int sx, out int sy)
+        internal void GetCurrentSectionCoordinates(int px, int py, out int sx, out int sy)
         {
             sx = px/Config.SECT_W;
             sy = py/Config.SECT_H;
@@ -626,15 +634,15 @@ namespace HackSharp
         /// <param name="py"></param>
         /// <param name="sx"></param>
         /// <param name="sy"></param>
-        internal void get_current_section(int px, int py, out int sx, out int sy)
+        internal void GetCurrentSection(int px, int py, out int sx, out int sy)
         {
-            get_current_section_coordinates(px, py, out sx, out sy);
+            GetCurrentSectionCoordinates(px, py, out sx, out sy);
 
-            if (!d.s[d.dl, sx, sy].exists ||
-                px < d.s[d.dl, sx, sy].rx1 ||
-                px > d.s[d.dl, sx, sy].rx2 ||
-                py < d.s[d.dl, sx, sy].ry1 ||
-                py > d.s[d.dl, sx, sy].ry2)
+            if (!Complex.s[Complex.DungeonLevel, sx, sy].exists ||
+                px < Complex.s[Complex.DungeonLevel, sx, sy].rx1 ||
+                px > Complex.s[Complex.DungeonLevel, sx, sy].rx2 ||
+                py < Complex.s[Complex.DungeonLevel, sx, sy].ry1 ||
+                py > Complex.s[Complex.DungeonLevel, sx, sy].ry2)
             {
                 sx = -1;
                 sy = -1;
@@ -647,27 +655,26 @@ namespace HackSharp
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        internal char tile_at(int x, int y)
+        internal char TileAt(int x, int y)
         {
-            return (char) map[x, y];
+            return (char) Map[x, y];
         }
 
         /// <summary>
         /// Completely redraw the map.  
         /// Take also care of the visible panel area. 
-        /// 
-        /// Note: it's important that 'map_cursor' is not called in this function since 'map_cursor' scrolls the screen if this is necessary.  Scrolling the screen entails a call to 'paint_map' and you'd have an endless loop.
         /// </summary>
-        internal void paint_map()
+        /// <remarks>it's important that 'map_cursor' is not called in this function since 'map_cursor' scrolls the screen if this is necessary.  Scrolling the screen entails a call to 'paint_map' and you'Complex have an endless loop.</remarks>
+        internal void PaintMap()
         {
             int x, y;
 
             /* Paint the map line by line. */
-            for (y = d.psy*Config.SECT_H; y < d.psy*Config.SECT_H + Config.VMAP_H; y++)
+            for (y = Complex.psy*Config.SECT_H; y < Complex.psy*Config.SECT_H + Config.VMAP_H; y++)
             {
-                Terminal.cursor(0, 1 + y - d.psy*Config.SECT_H);
-                for (x = d.psx*Config.SECT_W; x < d.psx*Config.SECT_W + Config.VMAP_W; x++)
-                    print_tile_at_position(x, y);
+                Terminal.cursor(0, 1 + y - Complex.psy*Config.SECT_H);
+                for (x = Complex.psx*Config.SECT_W; x < Complex.psx*Config.SECT_W + Config.VMAP_W; x++)
+                    PrintTileAtPosition(x, y);
             }
 
             /* Update the screen. */
@@ -704,7 +711,7 @@ namespace HackSharp
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        private void map_cursor(int x, int y)
+        internal void map_cursor(int x, int y)
         {
             bool change = false;
             bool any_change = false;
@@ -717,38 +724,38 @@ namespace HackSharp
                 change = false;
 
                 /* Determine the screen coordinates for the map coordinates. */
-                xp = x - d.psx*Config.SECT_W;
-                yp = y - d.psy*Config.SECT_H + 1;
+                xp = x - Complex.psx*Config.SECT_W;
+                yp = y - Complex.psy*Config.SECT_H + 1;
 
                 /* Check scrolling to the right. */
                 if (yp < 1)
                 {
-                    d.psy--;
+                    Complex.psy--;
                     change = true;
                 }
                     /* Check scrolling to the left. */
                 else if (yp >= Config.VMAP_H)
                 {
-                    d.psy++;
+                    Complex.psy++;
                     change = true;
                 }
                 /* Check scrolling downwards. */
                 if (xp < 1)
                 {
-                    d.psx--;
+                    Complex.psx--;
                     change = true;
                 }
                     /* Check scrolling upwards. */
                 else if (xp >= Config.VMAP_W)
                 {
-                    d.psx++;
+                    Complex.psx++;
                     change = true;
                 }
             } while (change);
 
             /* Scroll the map if required to do so. */
             if (any_change)
-                paint_map();
+                PaintMap();
 
             /* Set the cursor. */
             Terminal.cursor(xp, yp);
@@ -766,15 +773,15 @@ namespace HackSharp
             int sx, sy;
             byte i;
 
-            get_current_section_coordinates(x, y, out sx, out sy);
+            GetCurrentSectionCoordinates(x, y, out sx, out sy);
 
             for (i = 0; i < 4; i++)
-                if (d.s[d.dl, sx, sy].dx[i] == x && d.s[d.dl, sx, sy].dy[i] == y)
+                if (Complex.s[Complex.DungeonLevel, sx, sy].dx[i] == x && Complex.s[Complex.DungeonLevel, sx, sy].dy[i] == y)
                 {
-                    d.s[d.dl, sx, sy].dt[i] = (byte) door;
-                    map[x, y] = (byte) door;
-                    set_knowledge((byte) x, (byte) y, 0);
-                    know(x, y);
+                    Complex.s[Complex.DungeonLevel, sx, sy].dt[i] = (byte) door;
+                    Map[x, y] = (byte) door;
+                    SetKnowledge((byte) x, (byte) y, 0);
+                    Know(x, y);
                 }
         }
 
@@ -787,7 +794,7 @@ namespace HackSharp
         /// <remarks>NOTE: The knowledge map is saved in a bit field to save some memory.</remarks>
         private bool is_known(int x, int y)
         {
-            return (d.known[d.dl, x >> 3, y] & (1 << (x%8))) > 0;
+            return (Complex.Known[Complex.DungeonLevel, x >> 3, y] & (1 << (x%8))) > 0;
         }
 
         /// <summary>
@@ -796,12 +803,12 @@ namespace HackSharp
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <param name="known"></param>
-        private void set_knowledge(byte x, byte y, byte known)
+        private void SetKnowledge(byte x, byte y, byte known)
         {
             if (known > 0)
-                d.known[d.dl, x >> 3, y] |= (byte) (1 << (x%8));
+                Complex.Known[Complex.DungeonLevel, x >> 3, y] |= (byte) (1 << (x%8));
             else
-                d.known[d.dl, x >> 3, y] &= (byte) (~(1 << (x%8)));
+                Complex.Known[Complex.DungeonLevel, x >> 3, y] &= (byte) (~(1 << (x%8)));
         }
     }
 }

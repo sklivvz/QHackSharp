@@ -20,19 +20,17 @@
  */
 
 using System;
-using System.Drawing;
 
 namespace HackSharp
 {
     internal class Game
     {
+        private readonly Dungeon _dungeon;
+        private readonly Monsters _monsters;
+        private readonly Complex d;
         private bool walk_in_room;
         private bool walk_mode;
         private int walk_steps;
-
-        private readonly DungeonComplex d;
-        private readonly Dungeon _dungeon;
-        private Monsters _monsters;
 
         public Game(Dungeon dungeon, Monsters monsters)
         {
@@ -40,7 +38,7 @@ namespace HackSharp
             if (monsters == null) throw new ArgumentNullException("monsters");
 
             _dungeon = dungeon;
-            d = dungeon.d;
+            d = dungeon.Complex;
             _monsters = monsters;
         }
 
@@ -57,15 +55,15 @@ namespace HackSharp
             * XXXX: Once it is possible to save/restore the map this no longer
             *       must be done if the game was started by restoring a save file.
             */
-            d.dl = 0;
-            _dungeon.build_map();
-            _monsters.create_population();
-            _monsters.build_monster_map();
-            d.visited[0] = true;
+            d.DungeonLevel = 0;
+            _dungeon.BuildMap();
+            _monsters.CreatePopulation();
+            _monsters.BuildMonsterMap();
+            d.Visited[0] = true;
 
             /* Initial player position. */
-            d.px = d.opx = d.stxu[0];
-            d.py = d.opy = d.styu[0];
+            d.px = d.OldPlayerX = d.stxu[0];
+            d.py = d.OldPlayerY = d.styu[0];
 
             /* Initial panel position. */
             d.psx = d.psy = 0;
@@ -81,13 +79,13 @@ namespace HackSharp
             {
                 /* Print all the new things. */
                 update_screen(d.px, d.py);
-                _dungeon.d.pc.update_player_status();
+                _dungeon.Complex.ThePlayer.UpdatePlayerStatus();
 
                 /* Display the player and center the cursor. */
-                map_cursor(d.px, d.py);
+                _dungeon.map_cursor(d.px, d.py);
                 Terminal.set_color(ConsoleColor.White);
                 Terminal.prtchar('@');
-                map_cursor(d.px, d.py);
+                _dungeon.map_cursor(d.px, d.py);
 
                 /* Refresh the IO stuff. */
                 Terminal.update();
@@ -110,7 +108,7 @@ namespace HackSharp
                 switch (c)
                 {
                     case 'T':
-                        _dungeon.d.pc.adjust_training();
+                        _dungeon.Complex.ThePlayer.AdjustTraining();
                         break;
 
                     case 'o':
@@ -124,7 +122,7 @@ namespace HackSharp
                     case '<':
                         ascend_level();
                         /* Quit if necessary. */
-                        if (d.dl == -1)
+                        if (d.DungeonLevel == -1)
                             c = 'Q';
                         break;
 
@@ -153,22 +151,22 @@ namespace HackSharp
                         break;
 
                     case 'j':
-                        if (_dungeon.is_open(d.px - 1, d.py))
+                        if (_dungeon.IsOpen(d.px - 1, d.py))
                             d.px--;
                         break;
 
                     case 'l':
-                        if (_dungeon.is_open(d.px + 1, d.py))
+                        if (_dungeon.IsOpen(d.px + 1, d.py))
                             d.px++;
                         break;
 
                     case 'i':
-                        if (_dungeon.is_open(d.px, d.py - 1))
+                        if (_dungeon.IsOpen(d.px, d.py - 1))
                             d.py--;
                         break;
 
                     case 'k':
-                        if (_dungeon.is_open(d.px, d.py + 1))
+                        if (_dungeon.IsOpen(d.px, d.py + 1))
                             d.py++;
                         break;
 
@@ -176,11 +174,11 @@ namespace HackSharp
                         break;
                 }
 
-                d.opx = opx;
-                d.opy = opy;
+                d.OldPlayerX = opx;
+                d.OldPlayerY = opy;
 
                 /* Remove the player character from the screen. */
-                _dungeon.print_tile(opx, opy);
+                _dungeon.PrintTile(opx, opy);
             } while (c != 'Q');
         }
 
@@ -195,7 +193,7 @@ namespace HackSharp
             int sx, sy, px, py, opsx, opsy;
 
             /* Find the current general section. */
-            _dungeon.get_current_section_coordinates(d.px, d.py, out sx, out sy);
+            _dungeon.GetCurrentSectionCoordinates(d.px, d.py, out sx, out sy);
 
             /* Memorize the old panel view. */
             opsx = d.psx;
@@ -213,19 +211,19 @@ namespace HackSharp
 
             /* Repaint the whole screen map if necessary. */
             if (opsx != d.psx || opsy != d.psy)
-                _dungeon.paint_map();
+                _dungeon.PaintMap();
 
             /* Make the immediate surroundings known. */
             for (px = x - 1; px <= x + 1; px++)
                 for (py = y - 1; py <= y + 1; py++)
-                    _dungeon.know(px, py);
+                    _dungeon.Know(px, py);
 
             /* Check whether the PC is in a room or not. */
-            _dungeon.get_current_section(d.px, d.py, out sx, out sy);
+            _dungeon.GetCurrentSection(d.px, d.py, out sx, out sy);
 
             /* Make rooms known. */
             if (sx != -1 && sy != -1)
-                _dungeon.know_section(sx, sy);
+                _dungeon.KnowSection(sx, sy);
         }
 
         /// <summary>
@@ -243,19 +241,19 @@ namespace HackSharp
             int sx2;
             int sy2;
 
-            _dungeon.get_current_section(d.px, d.py, out sx1, out sy1);
+            _dungeon.GetCurrentSection(d.px, d.py, out sx1, out sy1);
 
             /* 
             * Check whether running should be stopped.
             */
 
-            if (walk_steps>0 || walk_in_room)
+            if (walk_steps > 0 || walk_in_room)
             {
                 /* Count the possible ways. */
-                int cn = (_dungeon.might_be_open(d.px, d.py - 1) && (d.py - 1 != d.opy)) ? 1 : 0;
-                int cs = (_dungeon.might_be_open(d.px, d.py + 1) && (d.py + 1 != d.opy)) ? 1 : 0;
-                int cw = (_dungeon.might_be_open(d.px - 1, d.py) && (d.px - 1 != d.opx)) ? 1 : 0;
-                int ce = (_dungeon.might_be_open(d.px + 1, d.py) && (d.px + 1 != d.opx)) ? 1 : 0;
+                int cn = (_dungeon.MightBeOpen(d.px, d.py - 1) && (d.py - 1 != d.OldPlayerY)) ? 1 : 0;
+                int cs = (_dungeon.MightBeOpen(d.px, d.py + 1) && (d.py + 1 != d.OldPlayerY)) ? 1 : 0;
+                int cw = (_dungeon.MightBeOpen(d.px - 1, d.py) && (d.px - 1 != d.OldPlayerX)) ? 1 : 0;
+                int ce = (_dungeon.MightBeOpen(d.px + 1, d.py) && (d.px + 1 != d.OldPlayerX)) ? 1 : 0;
 
                 /* Check... */
                 if (walk_in_room)
@@ -295,7 +293,7 @@ namespace HackSharp
 
                     /* Check for special features. */
                     if (walk_steps > 0)
-                        walk_mode = walk_mode && (_dungeon.tile_at(d.px, d.py) == Tiles.FLOOR);
+                        walk_mode = walk_mode && (_dungeon.TileAt(d.px, d.py) == Tiles.FLOOR);
                 }
                 else
                     /* Check for intersections. */
@@ -326,44 +324,44 @@ namespace HackSharp
             switch (dir)
             {
                 case Direction.N:
-                    if (_dungeon.is_open(d.px, d.py - 1))
+                    if (_dungeon.IsOpen(d.px, d.py - 1))
                         d.py--;
-                    else if (_dungeon.is_open(d.px - 1, d.py) && d.px - 1 != d.opx)
+                    else if (_dungeon.IsOpen(d.px - 1, d.py) && d.px - 1 != d.OldPlayerX)
                         d.px--;
-                    else if (_dungeon.is_open(d.px + 1, d.py) && d.px + 1 != d.opx)
+                    else if (_dungeon.IsOpen(d.px + 1, d.py) && d.px + 1 != d.OldPlayerX)
                         d.px++;
                     else
                         walk_mode = false;
                     break;
 
                 case Direction.S:
-                    if (_dungeon.is_open(d.px, d.py + 1))
+                    if (_dungeon.IsOpen(d.px, d.py + 1))
                         d.py++;
-                    else if (_dungeon.is_open(d.px - 1, d.py) && d.px - 1 != d.opx)
+                    else if (_dungeon.IsOpen(d.px - 1, d.py) && d.px - 1 != d.OldPlayerX)
                         d.px--;
-                    else if (_dungeon.is_open(d.px + 1, d.py) && d.px + 1 != d.opx)
+                    else if (_dungeon.IsOpen(d.px + 1, d.py) && d.px + 1 != d.OldPlayerX)
                         d.px++;
                     else
                         walk_mode = false;
                     break;
 
                 case Direction.E:
-                    if (_dungeon.is_open(d.px + 1, d.py))
+                    if (_dungeon.IsOpen(d.px + 1, d.py))
                         d.px++;
-                    else if (_dungeon.is_open(d.px, d.py + 1) && d.py + 1 != d.opy)
+                    else if (_dungeon.IsOpen(d.px, d.py + 1) && d.py + 1 != d.OldPlayerY)
                         d.py++;
-                    else if (_dungeon.is_open(d.px, d.py - 1) && d.py - 1 != d.opy)
+                    else if (_dungeon.IsOpen(d.px, d.py - 1) && d.py - 1 != d.OldPlayerY)
                         d.py--;
                     else
                         walk_mode = false;
                     break;
 
                 case Direction.W:
-                    if (_dungeon.is_open(d.px - 1, d.py))
+                    if (_dungeon.IsOpen(d.px - 1, d.py))
                         d.px--;
-                    else if (_dungeon.is_open(d.px, d.py + 1) && d.py + 1 != d.opy)
+                    else if (_dungeon.IsOpen(d.px, d.py + 1) && d.py + 1 != d.OldPlayerY)
                         d.py++;
-                    else if (_dungeon.is_open(d.px, d.py - 1) && d.py - 1 != d.opy)
+                    else if (_dungeon.IsOpen(d.px, d.py - 1) && d.py - 1 != d.OldPlayerY)
                         d.py--;
                     else
                         walk_mode = false;
@@ -371,10 +369,10 @@ namespace HackSharp
             }
 
             /* Find the new section. */
-            _dungeon.get_current_section(d.px, d.py, out sx2, out sy2);
+            _dungeon.GetCurrentSection(d.px, d.py, out sx2, out sy2);
 
             /* Entering/leaving a room will deactivate walk-mode. */
-            if (walk_steps>0)
+            if (walk_steps > 0)
                 walk_mode &= (sx1 == sx2 && sy1 == sy2);
 
             /* Increase the number of steps actually walked. */
@@ -384,12 +382,12 @@ namespace HackSharp
         /// <summary>
         /// Redraw the whole screen.
         /// </summary>
-        private void redraw()
+        internal void redraw()
         {
             Misc.clear_messages();
-            _dungeon.paint_map();
-            _dungeon.d.pc.update_necessary = true;
-            _dungeon.d.pc.update_player_status();
+            _dungeon.PaintMap();
+            _dungeon.Complex.ThePlayer.UpdateNecessary = true;
+            _dungeon.Complex.ThePlayer.UpdatePlayerStatus();
             Terminal.update();
         }
 
@@ -400,33 +398,33 @@ namespace HackSharp
         private void modify_dungeon_level(int mod)
         {
             /* Modify the actual dungeon level. */
-            d.dl += mod;
+            d.DungeonLevel += mod;
 
             /* Build the current dungeon map from the general description. */
-            _dungeon.build_map();
+            _dungeon.BuildMap();
 
             /* Determine monster frequencies for the current dungeon level. */
-            _monsters.initialize_monsters();
+            _monsters.InitializeMonsters();
 
             /*
             * If a level is entered for the first time a new monster population
             * will be generated and the player receives a little bit of experience
             * for going where nobody went before (or at least managed to come back).
             */
-            if (!d.visited[d.dl])
+            if (!d.Visited[d.DungeonLevel])
             {
-                _monsters.create_population();
-                d.visited[d.dl] = true;
+                _monsters.CreatePopulation();
+                d.Visited[d.DungeonLevel] = true;
 
                 /* Score some experience for exploring unknown depths. */
-                _dungeon.d.pc.score_exp(d.dl);
+                _dungeon.Complex.ThePlayer.ScoreExp(d.DungeonLevel);
             }
 
             /* Place monsters in the appropriate positions. */
-            _monsters.build_monster_map();
+            _monsters.BuildMonsterMap();
 
             /* Paint the new map. */
-            _dungeon.paint_map();
+            _dungeon.PaintMap();
         }
 
         /// <summary>
@@ -434,13 +432,13 @@ namespace HackSharp
         /// </summary>
         private void descend_level()
         {
-            if (_dungeon.tile_at(d.px, d.py) != Tiles.STAIR_DOWN)
+            if (_dungeon.TileAt(d.px, d.py) != Tiles.STAIR_DOWN)
                 Misc.you("don't see any stairs leading downwards.");
             else
             {
                 modify_dungeon_level(+1);
-                d.px = d.stxu[d.dl];
-                d.py = d.styu[d.dl];
+                d.px = d.stxu[d.DungeonLevel];
+                d.py = d.styu[d.DungeonLevel];
             }
         }
 
@@ -449,19 +447,19 @@ namespace HackSharp
         /// </summary>
         private void ascend_level()
         {
-            if (_dungeon.tile_at(d.px, d.py) != Tiles.STAIR_UP)
+            if (_dungeon.TileAt(d.px, d.py) != Tiles.STAIR_UP)
                 Misc.you("don't see any stairs leading upwards.");
             else
             {
-                if (d.dl >0)
+                if (d.DungeonLevel > 0)
                 {
                     modify_dungeon_level(-1);
-                    d.px = d.stxd[d.dl];
-                    d.py = d.styd[d.dl];
+                    d.px = d.stxd[d.DungeonLevel];
+                    d.py = d.styd[d.DungeonLevel];
                 }
                 else
                     /* Leave the dungeon. */
-                    d.dl = -1;
+                    d.DungeonLevel = -1;
             }
         }
 
@@ -481,7 +479,7 @@ namespace HackSharp
                 return;
 
             /* Check the door. */
-            switch (_dungeon.tile_at(tx, ty))
+            switch (_dungeon.TileAt(tx, ty))
             {
                 case Tiles.OPEN_DOOR:
                     Misc.message("This door is already open.");
@@ -513,7 +511,7 @@ namespace HackSharp
             walk_mode = true;
 
             /* Check for a room. */
-            _dungeon.get_current_section(d.px, d.py, out x, out y);
+            _dungeon.GetCurrentSection(d.px, d.py, out x, out y);
             walk_in_room = (x != -1 && y != -1);
         }
     }

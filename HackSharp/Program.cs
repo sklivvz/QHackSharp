@@ -41,6 +41,9 @@ namespace HackSharp
         /// <param name="args"></param>
         private static void Main(string[] args)
         {
+            try
+            {
+
             /* Print startup message. */
             Console.WriteLine("\nQuickHack Version 0.1");
             Console.WriteLine("(C) Copyright 1996, 1997 by Thomas Biskup.\n");
@@ -51,29 +54,37 @@ namespace HackSharp
 
             /* Initialize everything. */
             stdprtstr(".");
-            init_rand();
+            Terminal.init_rand();
             stdprtstr(".");
             var player = new Player();
             var dungeon = new Dungeon();
             var monsters = new Monsters();
-            monsters.init_monsters(dungeon);
+            var game = new Game(dungeon, monsters);
+            monsters.InitMonsters(dungeon);
             stdprtstr(".");
-            dungeon.init_dungeon(monsters);
+            dungeon.InitDungeon(monsters, player);
             stdprtstr(".");
-            player.init_player(dungeon);
+            player.InitPlayer(game);
             stdprtstr(".");
-            init_io();
+            Terminal.init_io();
             InitScreen();
 
             /* Play the game. */
-            var game = new Game(dungeon, monsters);
             game.play();
 
             /* Clean up. */
-            clean_up_io();
+            Terminal.clean_up_io();
 
             /* Be done. */
             return;
+            }
+            catch (Exception ex)
+            {
+
+                Console.WriteLine(ex);
+                Console.ReadLine();
+            }
+
         }
 
         private static void stdprtstr(string message)
@@ -90,7 +101,7 @@ namespace HackSharp
             Terminal.clear_screen();
             string s = String.Format("-----====<<<<< QHack {0}.{1} >>>>>====-----", Config.MAJOR_VERSION, Config.MINOR_VERSION);
             Terminal.cursor((80 - s.Length) >> 1, 3);
-            Terminal.prtstr("%s", s);
+            Terminal.prtstr("{0}", s);
             Terminal.cursor(16, 5);
             Terminal.prtstr("(The Quickest Roguelike Gaming Hack on the Net)");
             Terminal.cursor(19, 8);

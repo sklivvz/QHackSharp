@@ -44,28 +44,28 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="attributes.cs" />
+    <Compile Include="Attributes.cs" />
     <Compile Include="Direction.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Coord.cs" />
     <Compile Include="Dungeon.cs" />
-    <Compile Include="DungeonComplex.cs" />
+    <Compile Include="Complex.cs" />
     <Compile Include="Error.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="Misc.cs" />
     <Compile Include="Monster.cs" />
     <Compile Include="Monsters.cs" />
-    <Compile Include="monster_def.cs" />
-    <Compile Include="monster_rarity.cs" />
-    <Compile Include="monster_state.cs" />
-    <Compile Include="monster_struct.cs" />
+    <Compile Include="MonsterDefinition.cs" />
+    <Compile Include="MonsterRarity.cs" />
+    <Compile Include="MonsterState.cs" />
+    <Compile Include="MonsterStruct.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Section.cs" />
     <Compile Include="Terminal.cs" />
     <Compile Include="Tiles.cs" />
-    <Compile Include="tskills.cs" />
+    <Compile Include="TrainingSkills.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

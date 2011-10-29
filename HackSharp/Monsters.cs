@@ -4,8 +4,7 @@ namespace HackSharp
 {
     class Monsters
     {
-
-        monster_struct m = new monster_struct();
+        readonly MonsterStruct _m = new MonsterStruct();
 
         /* The total number of monsters. */
         private const int MAX_MONSTER = 4;
@@ -13,30 +12,30 @@ namespace HackSharp
 
 
         /* The complete monster list for the game. */
-        readonly monster_def[] md = new monster_def[]
+        readonly MonsterDefinition[] _monsterManual = new[]
                                         {
-                                            new monster_def{symbol='k', color = ConsoleColor.Green, name = "kobold", ac = 14, hits = "1d4", attacks = 1,to_hit = 0, damage = "1d6",rarity = monster_rarity.COMMON},
-                                            new monster_def{symbol='r', color = ConsoleColor.DarkYellow, name = "rat", ac = 12, hits = "1d3", attacks = 1,to_hit = 0, damage = "1d3", rarity = monster_rarity.COMMON},
-                                            new monster_def{symbol='g', color = ConsoleColor.Cyan, name = "goblin", ac = 13, hits = "1d8", attacks = 1,to_hit = 0, damage = "1d6", rarity = monster_rarity.COMMON},
-                                            new monster_def{symbol='x', color = ConsoleColor.Yellow, name = "lightning bug", ac = 18, hits = "2d3", attacks = 1, to_hit = 1,damage = "1d4", rarity = monster_rarity.RARE}
+                                            new MonsterDefinition{Symbol='k', Color = ConsoleColor.Green, Name = "kobold", ArmorClass = 14, Hits = "1d4", Attacks = 1,ToHit = 0, Damage = "1d6",Rarity = MonsterRarity.Common},
+                                            new MonsterDefinition{Symbol='r', Color = ConsoleColor.DarkYellow, Name = "rat", ArmorClass = 12, Hits = "1d3", Attacks = 1,ToHit = 0, Damage = "1d3", Rarity = MonsterRarity.Common},
+                                            new MonsterDefinition{Symbol='g', Color = ConsoleColor.Cyan, Name = "goblin", ArmorClass = 13, Hits = "1d8", Attacks = 1,ToHit = 0, Damage = "1d6", Rarity = MonsterRarity.Common},
+                                            new MonsterDefinition{Symbol='x', Color = ConsoleColor.Yellow, Name = "lightning bug", ArmorClass = 18, Hits = "2d3", Attacks = 1, ToHit = 1,Damage = "1d4", Rarity = MonsterRarity.Rare}
                                         };
 
         /* The dynamic index map for one monster level. */
-        byte[,] midx = new byte[Config.MAP_W,Config.MAP_H];
+        readonly byte[,] _midx = new byte[Config.MAP_W, Config.MAP_H];
 
         /* The total rarity for monsters; dependent on the current level. */
-        int total_rarity;
+        int _totalRarity;
 
         private Dungeon _dungeon;
-        private DungeonComplex d;
+        private Complex d;
 
         /// <summary>
         /// Initialize the monster structures.  Basically we have to notify all slots that they are empty.  Also the general index map needs to be initialized.
         /// </summary>
-        internal void init_monsters(Dungeon dungeon)
+        internal void InitMonsters(Dungeon dungeon)
         {
             _dungeon = dungeon;
-            d = _dungeon.d;
+            d = _dungeon.Complex;
 
             int i;
             int j;
@@ -44,68 +43,66 @@ namespace HackSharp
             for (i = 0; i < Config.MAX_DUNGEON_LEVEL; i++)
             {
                 /* The first empty monster slot. */
-                m.eidx[i] = 0;
+                _m.Eidx[i] = 0;
 
                 /* Initially all slots are empty. */
                 for (j = 0; j < Config.MONSTERS_PER_LEVEL - 1; j++)
                 {
-                    m.m[i,j].used = false;
-                    m.m[i,j].midx = j + 1;
+                    _m.MonsterSlots[i, j].Used = false;
+                    _m.MonsterSlots[i, j].Midx = j + 1;
                 }
 
                 /* The last one points to 'no more slots'. */
-                m.m[i,Config.MONSTERS_PER_LEVEL - 1].midx = -1;
-                m.m[i,Config.MONSTERS_PER_LEVEL - 1].used = false;
+                _m.MonsterSlots[i, Config.MONSTERS_PER_LEVEL - 1].Midx = -1;
+                _m.MonsterSlots[i, Config.MONSTERS_PER_LEVEL - 1].Used = false;
             }
 
             /* Initialize the monster index map as 'empty'. */
             for (i = 0; i < Config.MAP_W; i++)
                 for (j = 0; j < Config.MAP_H; j++)
-                    midx[i,j] = 255;
+                    _midx[i, j] = 255;
         }
 
 
         /// <summary>
         /// Create the monster map for a given dungeon level.
         /// </summary>
-        internal void build_monster_map()
+        internal void BuildMonsterMap()
         {
             int x, y;
 
             /* Initialize the monster index map as 'empty'. */
             for (x = 0; x < Config.MAP_W; x++)
                 for (y = 0; y < Config.MAP_H; y++)
-                    midx[x,y] = 255;
+                    _midx[x, y] = 255;
 
             /* Setup all monster indices. */
             for (x = 0; x < Config.MONSTERS_PER_LEVEL; x++)
-                if (m.m[d.dl,x].used)
-                    midx[m.m[d.dl,x].x,m.m[d.dl,x].y] = (byte) x;
+                if (_m.MonsterSlots[d.DungeonLevel, x].Used)
+                    _midx[_m.MonsterSlots[d.DungeonLevel, x].X, _m.MonsterSlots[d.DungeonLevel, x].Y] = (byte)x;
         }
 
         /// <summary>
         /// Create an initial monster population for a given level.
         /// </summary>
-        internal void create_population()
+        internal void CreatePopulation()
         {
             byte m;
 
             /* Initialize the basic monster data. */
-            initialize_monsters();
+            InitializeMonsters();
 
             for (m = 0; m < Config.INITIAL_MONSTER_NUMBER; m++)
             {
-                int index;
-
                 /* Find a monster index. */
-                index = get_monster_index();
+                int index = get_monster_index();
 
                 /* Paranoia. */
                 if (index == -1)
                     Error.die("Could not create the initial monster population");
 
                 /* Create a new monster. */
-                create_monster_in(index);
+                CreateMonsterIn(index);
             }
         }
 
@@ -116,29 +113,29 @@ namespace HackSharp
         /// </summary>
         /// <returns></returns>
         /// <remarks>Since the current monster list is somewhat limited only four monsters are available.</remarks>
-        int max_monster()
+        int MaxMonster()
         {
-            return Misc.imin(MAX_MONSTER, ((d.dl << 1) + 4));
+            return Misc.imin(MAX_MONSTER, ((d.DungeonLevel << 1) + 4));
         }
 
 
-        static int[] lmod =
+        static readonly int[] Lmod =
             {
                 100, 90, 80, 72, 64, 56, 50, 42, 35, 28, 20, 12, 4, 1
             };
-        
+
         /// <summary>
         /// Determine the frequency for a given monster.
         /// </summary>
         /// <param name="pMidx"></param>
         /// <returns></returns>
         /// <remarks>This value is level-dependent.  If the monster is out-of-depth (for QHack this means 'has a lower minimum level than the current dungeon level) it's frequency will be reduced.</remarks>
-        int calc_monster_rarity(int pMidx)
+        int CalcMonsterRarity(int pMidx)
         {
-            var rarity = (int) md[pMidx].rarity;
-            int levelDiff = d.dl - monster_level(pMidx);
+            var rarity = (int)_monsterManual[pMidx].Rarity;
+            int levelDiff = d.DungeonLevel - monster_level(pMidx);
 
-            return Misc.imax(1, (rarity * lmod[Misc.imin(13, levelDiff)]) / 100);
+            return Misc.imax(1, (rarity * Lmod[Misc.imin(13, levelDiff)]) / 100);
         }
 
 
@@ -158,14 +155,14 @@ namespace HackSharp
         /// <summary>
         /// Calculate the frequencies for all available monsters based upon the current dungeon level.
         /// </summary>
-        internal void initialize_monsters()
+        internal void InitializeMonsters()
         {
             byte i;
-  
-            total_rarity = 0;
 
-            for (i = 0; i < max_monster(); i++)
-                total_rarity += calc_monster_rarity(i);
+            _totalRarity = 0;
+
+            for (i = 0; i < MaxMonster(); i++)
+                _totalRarity += CalcMonsterRarity(i);
         }
 
         /// <summary>
@@ -174,18 +171,15 @@ namespace HackSharp
         /// <returns></returns>
         int random_monster_type()
         {
-            int roll;
-            int i;
+            long roll = Terminal.rand_long(_totalRarity) + 1;
+            int i = 0;
 
-            roll = rand_long(total_rarity) + 1;
-            i = 0;
-
-            while (roll > calc_monster_rarity(i))
+            while (roll > CalcMonsterRarity(i))
             {
-                roll -= calc_monster_rarity(i);
+                roll -= CalcMonsterRarity(i);
                 i++;
             }
-  
+
             return i;
         }
 
@@ -194,18 +188,22 @@ namespace HackSharp
         /// Create a new monster in a given slot.
         /// </summary>
         /// <param name="pmidx"></param>
-        void create_monster_in(int pmidx)
+        void CreateMonsterIn(int pmidx)
         {
             /* Adjust the 'empty' index. */
-            if (m.eidx[d.dl] == pmidx)
-                m.eidx[d.dl] = (byte) m.m[d.dl,pmidx].midx; 
+            if (_m.Eidx[d.DungeonLevel] == pmidx)
+                _m.Eidx[d.DungeonLevel] = (byte)_m.MonsterSlots[d.DungeonLevel, pmidx].Midx;
 
             /* Create the actual monster. */
-            m.m[d.dl,pmidx].used = true;
-            m.m[d.dl,pmidx].midx = random_monster_type();
-            get_monster_coordinates(out m.m[d.dl,pmidx].x, out m.m[d.dl,pmidx].y);
-            m.m[d.dl,pmidx].hp = m.m[d.dl,pmidx].max_hp = mhits(m.m[d.dl,pmidx].midx);
-            m.m[d.dl,pmidx].state = monster_state.ASLEEP;
+            _m.MonsterSlots[d.DungeonLevel, pmidx].Used = true;
+            _m.MonsterSlots[d.DungeonLevel, pmidx].Midx = random_monster_type();
+            int x;
+            int y;
+            get_monster_coordinates(out x, out y);
+            _m.MonsterSlots[d.DungeonLevel, pmidx].X = x;
+            _m.MonsterSlots[d.DungeonLevel, pmidx].Y = y;
+            _m.MonsterSlots[d.DungeonLevel, pmidx].Hp = _m.MonsterSlots[d.DungeonLevel, pmidx].MaxHp = mhits(_m.MonsterSlots[d.DungeonLevel, pmidx].Midx);
+            _m.MonsterSlots[d.DungeonLevel, pmidx].State = MonsterState.Asleep;
         }
 
 
@@ -219,16 +217,16 @@ namespace HackSharp
         /// 2. New monsters should not be in LOS of the PC.
         /// 3. New monsters should not be created in spots where another monster is standing.
         /// </remarks>
-        void get_monster_coordinates(out int x,  out int y)
+        void get_monster_coordinates(out int x, out int y)
         {
             do
             {
-                x = rand_int(Config.MAP_W);
-                y = rand_int(Config.MAP_H);
+                x = Terminal.rand_int(Config.MAP_W);
+                y = Terminal.rand_int(Config.MAP_H);
             }
-            while (_dungeon.tile_at(x, y) != Tiles.FLOOR ||
+            while (_dungeon.TileAt(x, y) != Tiles.FLOOR ||
                    los(x, y) ||
-                   midx[x,y] != 255);
+                   _midx[x, y] != 255);
         }
 
         /// <summary>
@@ -238,7 +236,7 @@ namespace HackSharp
         /// <returns></returns>
         int mhits(int midx)
         {
-            return Misc.dice(md[midx].hits);
+            return Misc.dice(_monsterManual[midx].Hits);
         }
 
         /// <summary>
@@ -247,7 +245,7 @@ namespace HackSharp
         /// <returns></returns>
         int get_monster_index()
         {
-            return m.eidx[d.dl];
+            return _m.Eidx[d.DungeonLevel];
         }
 
 
@@ -266,10 +264,10 @@ namespace HackSharp
                 return true;
 
             /* Get the section for the given position. */
-            _dungeon.get_current_section(x, y, out sx, out sy);
+            _dungeon.GetCurrentSection(x, y, out sx, out sy);
 
             /* Get the section for the player. */
-            _dungeon.get_current_section(d.px, d.py, out psx, out psy);
+            _dungeon.GetCurrentSection(d.px, d.py, out psx, out psy);
 
             /* In the same room section? */
             return (sx == psx && sy == psy && sx != -1);
@@ -282,14 +280,14 @@ namespace HackSharp
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-        internal monster get_monster_at(int x, int y)
+        internal Monster get_monster_at(int x, int y)
         {
             /* Paranoia. */
-            if (midx[x,y] == 255)
+            if (_midx[x, y] == 255)
                 Error.die("No monster to retrieve");
 
             /* Return the requested monster. */
-            return m.m[d.dl,midx[x,y]];
+            return _m.MonsterSlots[d.DungeonLevel, _midx[x, y]];
         }
 
         /// <summary>
@@ -299,7 +297,7 @@ namespace HackSharp
         /// <returns></returns>
         internal ConsoleColor monster_color(int pMidx)
         {
-            return md[m.m[d.dl,pMidx].midx].color;
+            return _monsterManual[_m.MonsterSlots[d.DungeonLevel, pMidx].Midx].Color;
         }
 
 
@@ -311,7 +309,7 @@ namespace HackSharp
         /// <returns></returns>
         internal char monster_tile(int pMidx)
         {
-            return md[m.m[d.dl,pMidx].midx].symbol;
+            return _monsterManual[_m.MonsterSlots[d.DungeonLevel, pMidx].Midx].Symbol;
         }
 
         /// <summary>
@@ -322,7 +320,7 @@ namespace HackSharp
         /// <returns></returns>
         internal bool is_monster_at(int x, int y)
         {
-            return (midx[x,y] != 255);
+            return (_midx[x, y] != 255);
         }
 
         /// <summary>

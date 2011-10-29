@@ -3,8 +3,8 @@ namespace HackSharp
     /// <summary>
     /// For the attributes used by QHack.
     /// </summary>
-    enum attributes
+    enum Attributes
     {
-        STRENGTH, INTELLIGENCE, DEXTERITY, TOUGHNESS, MANA, MAX_ATTRIBUTE
+        Strength, Intelligence, Dexterity, Toughness, Mana, MaxAttribute
     };
 }

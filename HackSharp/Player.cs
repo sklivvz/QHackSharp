@@ -31,92 +31,97 @@ namespace HackSharp
         internal const int MaxSkills = 11;
         private const int MaxAttribute = 6;
 
+        private static readonly string[] TskillS =
+            {
+                "Strength", "Intelligence", "Dexterity", "Toughness", "Mana",
+                "Hitpoints", "Magical Power", "To-Hit Bonus", "To-Damage Bonus",
+                "Searching"
+            };
+
         /* Name. */
-        string name;
 
         /* Attribute scores and maximum attribute scores ever reached. */
-        byte[] attribute = new byte[MaxAttribute];
-        byte[] max_attribute = new byte[MaxAttribute];
-
-        /* Hitpoints (current and maximum). */
-        int hits;
-        int max_hits;
-
-        /* Magical power. */
-        int power;
-        int max_power;
-
-        /* Experience scores. */
-        int experience;
-        int[] tskill_exp = new int[MaxSkills];
+        private readonly byte[] _attributes = new byte[MaxAttribute];
+        private readonly byte[] _maxAttributes = new byte[MaxAttribute];
+        private readonly int[] _tskillExp = new int[MaxSkills];
 
         /* Training adjustment. */
-        int[] tskill_training = new int[MaxSkills];
+        private readonly int[] _tskillTraining = new int[MaxSkills];
+        private int _experience;
+        private Game _game;
+
+        /* Hitpoints (current and maximum). */
+        private int _hits;
+        private int _maxHits;
+
+        /* Magical power. */
+        private int _maxPower;
+        private string _name;
+        private int _power;
+
+        /* Experience scores. */
 
         /* Searching skill. */
-        byte searching;
+        private byte _searching;
 
         /* Combat related stuff. */
-        int to_hit;
-        int to_damage;
+        private int _toDamage;
+        private int _toHit;
 
 
         /* Update the player status line? */
-        internal bool update_necessary = true;
+        private bool _updateNecessary = true;
 
         /* String constants for the training skills. */
-        static string[] tskill_s =
-{
-  "Strength", "Intelligence", "Dexterity", "Toughness", "Mana",
-  "Hitpoints", "Magical Power", "To-Hit Bonus", "To-Damage Bonus",
-  "Searching"
-};
 
-        private Dungeon _dungeon;
-        private DungeonComplex d;
+        public bool UpdateNecessary
+        {
+            get { return _updateNecessary; }
+            set { _updateNecessary = value; }
+        }
 
         /// <summary>
         /// Set up all the data for the player.
         /// </summary>
-        internal void init_player(Dungeon dungeon)
+        internal void InitPlayer(Game game)
         {
-            if (dungeon == null) throw new ArgumentNullException("dungeon");
-            _dungeon = dungeon;
-            d = _dungeon.d;
+            if (game == null) throw new ArgumentNullException("game");
+
+            _game = game;
             int i;
 
             /* Initial attributes. */
-            for (i = 0; i < (int)attributes.MAX_ATTRIBUTE; i++)
-                set_attribute((attributes)i, Misc.dice("6d3"));
+            for (i = 0; i < (int) Attributes.MaxAttribute; i++)
+                SetAttribute((Attributes) i, Misc.dice("6d3"));
 
             /* Initial hitpoints. */
-            d.pc.hits = d.pc.max_hits = (get_attribute(attributes.TOUGHNESS) +
-                             (get_attribute(attributes.STRENGTH) >> 1) +
-                             Misc.dice("1d6"));
+            _hits = _maxHits = (GetAttribute(Attributes.Toughness) +
+                                                                      (GetAttribute(Attributes.Strength) >> 1) +
+                                                                      Misc.dice("1d6"));
 
             /* Initial magical power. */
-            d.pc.power = d.pc.max_power = (get_attribute(attributes.MANA) +
-                           (get_attribute(attributes.INTELLIGENCE) >> 2) +
-                           Misc.dice("1d6"));
+            _power = _maxPower = (GetAttribute(Attributes.Mana) +
+                                                                        (GetAttribute(Attributes.Intelligence) >> 2) +
+                                                                        Misc.dice("1d6"));
 
             /* Initial experience. */
-            d.pc.experience = 0;
+            _experience = 0;
             for (i = 0; i < MaxSkills; i++)
-                d.pc.tskill_exp[i] = 0;
+                _tskillExp[i] = 0;
 
             /* The number of training units initially used. */
-            for (i = (int)tskills.T_MANA + 1; i < MaxSkills; i++)
-                d.pc.tskill_training[i] = Config.TUNITS / (MaxSkills - (int)tskills.T_MANA - 1);
+            for (i = (int) TrainingSkills.T_MANA + 1; i < MaxSkills; i++)
+                _tskillTraining[i] = Config.TUNITS/(MaxSkills - (int) TrainingSkills.T_MANA - 1);
 
             /* Searching skill. */
-            d.pc.searching = (byte) (get_attribute(attributes.INTELLIGENCE) +
-                                     (get_attribute(attributes.MANA) / 5));
+            _searching = (byte) (GetAttribute(Attributes.Intelligence) +
+                                                    (GetAttribute(Attributes.Mana)/5));
 
             /* Combat bonusses. */
-            d.pc.to_hit = d.pc.to_damage = 0;
+            _toHit = _toDamage = 0;
 
             /* Default name. */
-            d.pc.name = "brak";
+            _name = "brak";
         }
 
 
@@ -125,9 +130,9 @@ namespace HackSharp
         /// </summary>
         /// <param name="theAttribute"></param>
         /// <param name="value"></param>
-        void set_attribute(attributes theAttribute, int value)
+        private void SetAttribute(Attributes theAttribute, int value)
         {
-            d.pc.attribute[(int)theAttribute] = d.pc.max_attribute[(int)theAttribute] = (byte) value;
+            _attributes[(int) theAttribute] = _maxAttributes[(int) theAttribute] = (byte) value;
         }
 
         /// <summary>
@@ -135,216 +140,215 @@ namespace HackSharp
         /// </summary>
         /// <param name="theAttribute"></param>
         /// <returns></returns>
-        byte get_attribute(attributes theAttribute)
+        private byte GetAttribute(Attributes theAttribute)
         {
-            return d.pc.attribute[(int)theAttribute];
+            return _attributes[(int) theAttribute];
         }
 
         /// <summary>
         /// Draw the status line.
         /// </summary>
-        internal void update_player_status()
+        internal void UpdatePlayerStatus()
         {
-            if (update_necessary)
+            if (_updateNecessary)
             {
                 Terminal.cursor(0, 24);
                 Terminal.set_color(ConsoleColor.Gray);
-                Terminal.prtstr("%s   St:%d  In:%d  Dx:%d  To:%d  Ma:%d  H:%d(%d)  P:%d(%d)  X:%ld"
-                   , d.pc.name
-                   , (int)d.pc.attribute[(int)attributes.STRENGTH]
-                   , (int)d.pc.attribute[(int)attributes.INTELLIGENCE]
-                   , (int)d.pc.attribute[(int)attributes.DEXTERITY]
-                   , (int)d.pc.attribute[(int)attributes.TOUGHNESS]
-                   , (int)d.pc.attribute[(int)attributes.MANA]
-                   , d.pc.hits
-                   , d.pc.max_hits
-                   , d.pc.power
-                   , d.pc.max_power
-                   , (long)d.pc.experience);
+                Terminal.prtstr(
+                    "{0}   St:{1}  In:{2}  Dx:{3}  To:{4}  Ma:{5}  H:{6}({7})  P:{8}({9})  X:{10}"
+                    , _name
+                    , (int) _attributes[(int) Attributes.Strength]
+                    , (int) _attributes[(int) Attributes.Intelligence]
+                    , (int) _attributes[(int) Attributes.Dexterity]
+                    , (int) _attributes[(int) Attributes.Toughness]
+                    , (int) _attributes[(int) Attributes.Mana]
+                    , _hits
+                    , _maxHits
+                    , _power
+                    , _maxPower
+                    , (long) _experience);
                 Terminal.clear_to_eol();
 
-                update_necessary = false;
+                _updateNecessary = false;
             }
         }
 
         /// <summary>
         /// This function provides the main menu for adjusting the available training levels.  Everything important happens here.
         /// </summary>
-        internal void adjust_training()
-{
-  char c;
+        internal void AdjustTraining()
+        {
+            char c;
             int i;
-            int exp_length;
-            int unit_length;
-            byte pos = 0;  /* Initial menu position. */
-  
-  /*
-   * Determine the maximum training skill length.  This could be a hard-coded
-   * constants but by doing this dynamically it's a lot simpler and less
-   * error-prone to change the specific training skills.
-   *
-   * In the same run we count the number of training units spent.
-   */
-  int length = exp_length = unit_length = 0;
-  int remainingUnits = Config.TUNITS;
-  for (i = 0; i < MaxSkills; i++)
-  {
-    length = Misc.imax(length, (tskill_s[i]).Length);
-    exp_length = Misc.imax(exp_length, (d.pc.tskill_exp[i] / Config.TUNITS).ToString().Length);
-    unit_length = Misc.imax(unit_length, (required_exp((tskills) i) / Config.TUNITS).ToString().Length);
-    remainingUnits -= d.pc.tskill_training[i];
-  }
+            int expLength;
+            int unitLength;
+            byte pos = 0; /* Initial menu position. */
 
-  /* Main loop.  Draw the menu and react on commands. */
-  bool doRedraw = true;
+            /*
+             * Determine the maximum training skill length.  This could be a hard-coded
+             * constants but by doing this dynamically it's a lot simpler and less
+             * error-prone to change the specific training skills.
+             *
+             * In the same run we count the number of training units spent.
+             */
+            int length = expLength = unitLength = 0;
+            int remainingUnits = Config.TUNITS;
+            for (i = 0; i < MaxSkills; i++)
+            {
+                length = Misc.imax(length, (TskillS[i]).Length);
+                expLength = Misc.imax(expLength, (_tskillExp[i]/Config.TUNITS).ToString().Length);
+                unitLength = Misc.imax(unitLength, (RequiredExp((TrainingSkills) i)/Config.TUNITS).ToString().Length);
+                remainingUnits -= _tskillTraining[i];
+            }
 
-  do
-  {
-    /* Draw the menu. */
-    if (doRedraw)
-    {
-      Terminal.set_color(ConsoleColor.Gray);
-      
-      int trainingLength = 0;
-      for (i = 0; i < MaxSkills; i++)
-	trainingLength = Misc.imax(trainingLength, d.pc.tskill_training[i].ToString().Length);
-      for (i = 0; i < MaxSkills; i++)
-      {
-          Terminal.cursor(3, i);
-          Terminal.prtstr("    %*s: %*ld of %*ld [%*d]: %d   "
-	       , length
-	       , tskill_s[i]
-	       , exp_length
-	       , (long) d.pc.tskill_exp[i] / Config.TUNITS
-	       , unit_length
-	       , required_exp((tskills) i) / Config.TUNITS
-	       , trainingLength
-	       , d.pc.tskill_training[i]
-	       , current_level((tskills) i));
-      }
-      Terminal.cursor(0, 24);
-      Terminal.prtstr(" [iI] Up -- [kK] Down -- [jJ] Decrease -- [lL] Increase");
-      Terminal.prtstr(" -- Units: %d", (int)remainingUnits);
-      Terminal.clear_to_eol();
-      doRedraw = false;
-    }
+            /* Main loop.  Draw the menu and react on commands. */
+            bool doRedraw = true;
 
-    Terminal.cursor(4, pos);
-    Terminal.prtstr("->");
-    Terminal.update();
-    c = Terminal.getkey();
-    Terminal.cursor(4, pos);
-    Terminal.prtstr("  ");
-    Terminal.update();
-      
-    switch (c)
-    {
-      case 'L':
-	if (remainingUnits>0)
-	{
-	  d.pc.tskill_training[pos] += remainingUnits;
-	  remainingUnits = 0;
-	  doRedraw = true;
-	}
-	break;
-	
-      case 'l':
-	if (remainingUnits>0)
-	{
-	  remainingUnits--;
-	  d.pc.tskill_training[pos]++;
-	  doRedraw = true;
-	}
-	break;
-	
-      case 'J':
-	if (d.pc.tskill_training[pos]>0)
-	{
-	  remainingUnits += d.pc.tskill_training[pos];
-	  d.pc.tskill_training[pos] = 0;
-	  doRedraw = true;
-	}
-	break;
-	
-      case 'j':
-	if (d.pc.tskill_training[pos]>0)
-	{
-	  d.pc.tskill_training[pos]--;
-	  remainingUnits++;
-	  doRedraw = true;
-	}
-	break;
+            do
+            {
+                /* Draw the menu. */
+                if (doRedraw)
+                {
+                    Terminal.set_color(ConsoleColor.Gray);
 
-      case 'I':
-	pos = 0;
-	break;
-	
-      case 'i':
-	if (pos>0)
-	  pos--;
-	else
-	  pos = MaxSkills - 1;
-	break;
+                    int trainingLength = 0;
+                    for (i = 0; i < MaxSkills; i++)
+                        trainingLength = Misc.imax(trainingLength,
+                                                   _tskillTraining[i].ToString().Length);
+                    for (i = 0; i < MaxSkills; i++)
+                    {
+                        Terminal.cursor(3, i);
+                        Terminal.prtstr("    %*s: %*ld of %*ld [%*Complex]: %Complex   "
+                                        , length
+                                        , TskillS[i]
+                                        , expLength
+                                        , (long) _tskillExp[i]/Config.TUNITS
+                                        , unitLength
+                                        , RequiredExp((TrainingSkills) i)/Config.TUNITS
+                                        , trainingLength
+                                        , _tskillTraining[i]
+                                        , CurrentLevel((TrainingSkills) i));
+                    }
+                    Terminal.cursor(0, 24);
+                    Terminal.prtstr(" [iI] Up -- [kK] Down -- [jJ] Decrease -- [lL] Increase");
+                    Terminal.prtstr(" -- Units: %Complex", remainingUnits);
+                    Terminal.clear_to_eol();
+                    doRedraw = false;
+                }
 
-      case 'K':
-	pos = MaxSkills - 1;
-	break;
-	
-      case 'k':
-	if (pos < MaxSkills - 1)
-	  pos++;
-	else
-	  pos = 0;
-	break;
-	
-  
-    }
-  }
-  while (c != 27 && c != 'Q' && c != 32);
+                Terminal.cursor(4, pos);
+                Terminal.prtstr("->");
+                Terminal.update();
+                c = Terminal.getkey();
+                Terminal.cursor(4, pos);
+                Terminal.prtstr("  ");
+                Terminal.update();
 
-  /* Clean up. */
-  _redraw();
-}
+                switch (c)
+                {
+                    case 'L':
+                        if (remainingUnits > 0)
+                        {
+                            _tskillTraining[pos] += remainingUnits;
+                            remainingUnits = 0;
+                            doRedraw = true;
+                        }
+                        break;
+
+                    case 'l':
+                        if (remainingUnits > 0)
+                        {
+                            remainingUnits--;
+                            _tskillTraining[pos]++;
+                            doRedraw = true;
+                        }
+                        break;
+
+                    case 'J':
+                        if (_tskillTraining[pos] > 0)
+                        {
+                            remainingUnits += _tskillTraining[pos];
+                            _tskillTraining[pos] = 0;
+                            doRedraw = true;
+                        }
+                        break;
+
+                    case 'j':
+                        if (_tskillTraining[pos] > 0)
+                        {
+                            _tskillTraining[pos]--;
+                            remainingUnits++;
+                            doRedraw = true;
+                        }
+                        break;
+
+                    case 'I':
+                        pos = 0;
+                        break;
+
+                    case 'i':
+                        if (pos > 0)
+                            pos--;
+                        else
+                            pos = MaxSkills - 1;
+                        break;
+
+                    case 'K':
+                        pos = MaxSkills - 1;
+                        break;
+
+                    case 'k':
+                        if (pos < MaxSkills - 1)
+                            pos++;
+                        else
+                            pos = 0;
+                        break;
+                }
+            } while (c != 27 && c != 'Q' && c != 32);
+
+            /* Clean up. */
+            _game.redraw();
+        }
 
         /// <summary>
         /// Determine the required amount of experience for a specific skill.
         /// </summary>
         /// <param name="i"></param>
         /// <returns></returns>
-        int required_exp(tskills i)
+        private int RequiredExp(TrainingSkills i)
         {
             switch (i)
             {
-                case tskills.T_STRENGTH:
-                    return (d.pc.attribute[(int)attributes.STRENGTH] + 1) * 65 * Config.TUNITS;
+                case TrainingSkills.T_STRENGTH:
+                    return (_attributes[(int) Attributes.Strength] + 1)*65*Config.TUNITS;
 
-                case tskills.T_INTELLIGENCE:
-                    return (d.pc.attribute[(int)attributes.INTELLIGENCE] + 1) * 60 * Config.TUNITS;
+                case TrainingSkills.T_INTELLIGENCE:
+                    return (_attributes[(int) Attributes.Intelligence] + 1)*60*Config.TUNITS;
 
-                case tskills.T_DEXTERITY:
-                    return (d.pc.attribute[(int)attributes.DEXTERITY] + 1) * 60 * Config.TUNITS;
+                case TrainingSkills.T_DEXTERITY:
+                    return (_attributes[(int) Attributes.Dexterity] + 1)*60*Config.TUNITS;
 
-                case tskills.T_TOUGHNESS:
-                    return (d.pc.attribute[(int)attributes.TOUGHNESS] + 1) * 60 * Config.TUNITS;
+                case TrainingSkills.T_TOUGHNESS:
+                    return (_attributes[(int) Attributes.Toughness] + 1)*60*Config.TUNITS;
 
-                case tskills.T_MANA:
-                    return (d.pc.attribute[(int)attributes.MANA] + 1) * 55 * Config.TUNITS;
+                case TrainingSkills.T_MANA:
+                    return (_attributes[(int) Attributes.Mana] + 1)*55*Config.TUNITS;
 
-                case tskills.T_HITS:
-                    return (d.pc.max_hits + 1) * Config.TUNITS;
+                case TrainingSkills.T_HITS:
+                    return (_maxHits + 1)*Config.TUNITS;
 
-                case tskills.T_POWER:
-                    return (d.pc.max_power + 1) * Config.TUNITS;
+                case TrainingSkills.T_POWER:
+                    return (_maxPower + 1)*Config.TUNITS;
 
-                case tskills.T_2HIT:
-                    return (((d.pc.to_hit + 1) * (d.pc.to_hit + 2)) >> 1) * 5 * Config.TUNITS;
+                case TrainingSkills.T_2HIT:
+                    return (((_toHit + 1)*(_toHit + 2)) >> 1)*5*Config.TUNITS;
 
-                case tskills.T_2DAMAGE:
-                    return (((d.pc.to_damage + 1) * (d.pc.to_damage + 2)) >> 1)
-                  * 25 * Config.TUNITS;
+                case TrainingSkills.T_2DAMAGE:
+                    return (((_toDamage + 1)*(_toDamage + 2)) >> 1)
+                           *25*Config.TUNITS;
 
-                case tskills.T_SEARCHING:
-                    return (d.pc.searching + 1) * Config.TUNITS;
+                case TrainingSkills.T_SEARCHING:
+                    return (_searching + 1)*Config.TUNITS;
             }
 
             return 0;
@@ -355,31 +359,31 @@ namespace HackSharp
         /// </summary>
         /// <param name="i"></param>
         /// <returns></returns>
-        int current_level(tskills i)
+        private int CurrentLevel(TrainingSkills i)
         {
             switch (i)
             {
-                case tskills.T_STRENGTH:
-                case tskills.T_INTELLIGENCE:
-                case tskills.T_DEXTERITY:
-                case tskills.T_TOUGHNESS:
-                case tskills.T_MANA:
-                    return d.pc.attribute[(int)i];
+                case TrainingSkills.T_STRENGTH:
+                case TrainingSkills.T_INTELLIGENCE:
+                case TrainingSkills.T_DEXTERITY:
+                case TrainingSkills.T_TOUGHNESS:
+                case TrainingSkills.T_MANA:
+                    return _attributes[(int) i];
 
-                case tskills.T_HITS:
-                    return d.pc.max_hits;
+                case TrainingSkills.T_HITS:
+                    return _maxHits;
 
-                case tskills.T_POWER:
-                    return d.pc.max_power;
+                case TrainingSkills.T_POWER:
+                    return _maxPower;
 
-                case tskills.T_2HIT:
-                    return d.pc.to_hit;
+                case TrainingSkills.T_2HIT:
+                    return _toHit;
 
-                case tskills.T_2DAMAGE:
-                    return d.pc.to_damage;
+                case TrainingSkills.T_2DAMAGE:
+                    return _toDamage;
 
-                case tskills.T_SEARCHING:
-                    return d.pc.searching;
+                case TrainingSkills.T_SEARCHING:
+                    return _searching;
             }
 
             return 0;
@@ -389,71 +393,70 @@ namespace HackSharp
         /// Increase a specified training skill by +1.
         /// </summary>
         /// <param name="i"></param>
-        void increase_training_skill(tskills i)
+        private void IncreaseTrainingSkill(TrainingSkills i)
         {
             switch (i)
             {
-                case tskills.T_STRENGTH:
-                case tskills.T_INTELLIGENCE:
-                case tskills.T_DEXTERITY:
-                case tskills.T_TOUGHNESS:
-                case tskills.T_MANA:
-                    d.pc.attribute[(int) i]++;
+                case TrainingSkills.T_STRENGTH:
+                case TrainingSkills.T_INTELLIGENCE:
+                case TrainingSkills.T_DEXTERITY:
+                case TrainingSkills.T_TOUGHNESS:
+                case TrainingSkills.T_MANA:
+                    _attributes[(int) i]++;
                     break;
 
-                case tskills.T_HITS:
-                    d.pc.max_hits++;
-                    d.pc.hits++;
+                case TrainingSkills.T_HITS:
+                    _maxHits++;
+                    _hits++;
                     break;
 
-                case tskills.T_POWER:
-                    d.pc.max_power++;
-                    d.pc.power++;
+                case TrainingSkills.T_POWER:
+                    _maxPower++;
+                    _power++;
                     break;
 
-                case tskills.T_2HIT:
-                    d.pc.to_hit++;
+                case TrainingSkills.T_2HIT:
+                    _toHit++;
                     break;
 
-                case tskills.T_2DAMAGE:
-                    d.pc.to_damage++;
+                case TrainingSkills.T_2DAMAGE:
+                    _toDamage++;
                     break;
 
-                case tskills.T_SEARCHING:
-                    d.pc.searching++;
+                case TrainingSkills.T_SEARCHING:
+                    _searching++;
                     break;
             }
-            update_necessary = true;
+            _updateNecessary = true;
         }
 
         /// <summary>
         /// Score a specified number of experience points.
         /// </summary>
         /// <param name="x"></param>
-        internal void score_exp(int x)
+        internal void ScoreExp(int x)
         {
             int i;
 
             /* Overall adjustment. */
-            d.pc.experience += x;
+            _experience += x;
 
             /* Divided adjustment. */
             for (i = 0; i < MaxSkills; i++)
             {
-                d.pc.tskill_exp[i] += (x * d.pc.tskill_training[i]);
+                _tskillExp[i] += (x*_tskillTraining[i]);
 
                 /* Check advancement. */
-                while (d.pc.tskill_exp[i] >= required_exp((tskills)i))
+                while (_tskillExp[i] >= RequiredExp((TrainingSkills) i))
                 {
-                    d.pc.tskill_exp[i] -= required_exp((tskills)i);
-                    increase_training_skill((tskills) i);
-                    Misc.message("Your {0} increases to {1}.", tskill_s[i], current_level((tskills)i));
+                    _tskillExp[i] -= RequiredExp((TrainingSkills) i);
+                    IncreaseTrainingSkill((TrainingSkills) i);
+                    Misc.message("Your {0} increases to {1}.", TskillS[i], CurrentLevel((TrainingSkills) i));
                 }
             }
 
             /* Update the changes. */
-            update_necessary = true;
+            _updateNecessary = true;
         }
-
     }
 }

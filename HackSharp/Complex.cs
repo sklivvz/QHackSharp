@@ -30,14 +30,14 @@ namespace HackSharp
      * but since it's easy to use I headed into this direction.
      */
 
-    public class DungeonComplex
+    public class Complex
     {
         /* The current level number. */
-        public int dl;
+        public int DungeonLevel;
 
         /* Last player Coordinates. */
-        public int opx;
-        public int opy;
+        public int OldPlayerX;
+        public int OldPlayerY;
 
 
         /* The panel positions. */
@@ -45,21 +45,29 @@ namespace HackSharp
         public byte psy;
         public int px;
         public int py;
-        public byte[] stxd; // [MAX_DUNGEON_LEVEL - 1];
-        public byte[] stxu; // [MAX_DUNGEON_LEVEL];
-        public byte[] styd; // [MAX_DUNGEON_LEVEL - 1];
-        public byte[] styu; // [MAX_DUNGEON_LEVEL];
+        public byte[] stxd = new byte[Config.MAX_DUNGEON_LEVEL - 1];
+        public byte[] stxu = new byte[Config.MAX_DUNGEON_LEVEL];
+        public byte[] styd = new byte[Config.MAX_DUNGEON_LEVEL - 1];
+        public byte[] styu = new byte[Config.MAX_DUNGEON_LEVEL];
 
         /* Level was already visited? */
-        public bool[] visited = new bool[Config.MAX_DUNGEON_LEVEL];
+        public bool[] Visited = new bool[Config.MAX_DUNGEON_LEVEL];
 
         /* The knowledge map. */
-        public byte[, ,] known;
+        public byte[, ,] Known = new byte[Config.MAX_DUNGEON_LEVEL, Config.MAP_BIT_W, Config.MAP_H];
 
         /* The player data. */
-        public Player pc;
+        public Player ThePlayer;
 
         /* NSECT_W * NSECT_H Sections for each level. */
         public Section[, ,] s = new Section[Config.MAX_DUNGEON_LEVEL, Config.NSECT_W, Config.NSECT_H];
+
+        public Complex()
+        {
+            for (int i = 0; i < Config.MAX_DUNGEON_LEVEL; i++)
+                for (int j = 0; j < Config.NSECT_W; j++)
+                    for (int k = 0; k < Config.NSECT_H; k++)
+                        s[i, j, k] = new Section();
+        }
     }
 }
