@@ -55,16 +55,17 @@ namespace HackSharp
             stdprtstr(".");
             init_player();
             stdprtstr(".");
-            init_monsters();
-            stdprtstr(".");
             var dungeon = new Dungeon();
-            dungeon.init_dungeon();
+            var monsters = new Monsters();
+            monsters.init_monsters(dungeon);
+            stdprtstr(".");
+            dungeon.init_dungeon(monsters);
             stdprtstr(".");
             init_io();
             InitScreen();
 
             /* Play the game. */
-            var game = new Game(dungeon);
+            var game = new Game(dungeon, monsters);
             game.play();
 
             /* Clean up. */

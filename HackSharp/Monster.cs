@@ -1,11 +1,11 @@
 ﻿/*                               -*- Mode: C -*- 
- * error.c -- 
+ * monster.h -- 
  * ITIID           : $ITI$ $Header $__Header$
  * Author          : Thomas Biskup
- * Created On      : Mon Dec 30 00:16:03 1996
+ * Created On      : Mon Dec 30 18:08:50 1996
  * Last Modified By: Thomas Biskup
- * Last Modified On: Thu Jan  9 18:50:35 1997
- * Update Count    : 2
+ * Last Modified On: Thu Jan  9 20:12:30 1997
+ * Update Count    : 24
  * Status          : Unknown, Use with caution!
  *
  * (C) Copyright 1996, 1997 by Thomas Biskup.
@@ -19,20 +19,32 @@
  * $3 (as of January, 1997).
  */
 
-using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace HackSharp
 {
-    internal class Error
+    /// <summary>
+    /// A structure for a given monster.
+    /// </summary>
+    struct monster
     {
-        /// <summary>
-        /// Die with an error message.
-        /// </summary>
-        /// <param name="message"></param>
-        internal static void die(string message)
-        {
-            Console.WriteLine("HackSharp -- Internal error!\n*** Bug: {0}.\n", message);
-            Environment.Exit(1);
-        }
-    }
+        /* Is the entry occupied by a monster? */
+        internal bool used;
+
+        /* Monster type. */
+        internal int midx;
+
+        /* Position on the map. */
+        internal int x;
+        internal int y;
+
+        /* Hitpoint data. */
+        internal int hp;
+        internal int max_hp;
+
+        /* The current state (see above). */
+        internal monster_state state;
+    };
 }

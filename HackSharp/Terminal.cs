@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 
 namespace HackSharp
@@ -9,7 +10,7 @@ namespace HackSharp
             throw new System.NotImplementedException();
         }
 
-        public static void set_color(Color black)
+        public static void set_color(ConsoleColor black)
         {
             throw new System.NotImplementedException();
         }
@@ -42,6 +43,11 @@ namespace HackSharp
         internal static void prtstr(string p)
         {
             throw new System.NotImplementedException();
+        }
+
+        public static void clear_to_eol()
+        {
+            throw new NotImplementedException();
         }
     }
 }

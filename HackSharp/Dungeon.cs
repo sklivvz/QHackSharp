@@ -8,12 +8,16 @@ namespace HackSharp
         public static byte existence_chance;
         public static byte[,] map = new byte[Config.MAP_W,Config.MAP_H];
         public DungeonComplex d = new DungeonComplex();
+        private Monsters _monsters;
 
         /// <summary>
         /// Define all the basic dungeon structures and create the complete dungeon map.
         /// </summary>
-        public void init_dungeon()
+        /// <param name="monsters"></param>
+        public void init_dungeon(Monsters monsters)
         {
+            if (monsters == null) throw new ArgumentNullException("monsters");
+            _monsters = monsters;
             create_complete_dungeon();
         }
 
@@ -546,34 +550,33 @@ namespace HackSharp
         /// </summary>
         /// <param name="x"></param>
         /// <param name="y"></param>
-        private void print_tile(int x, int y)
+        internal void print_tile(int x, int y)
         {
             map_cursor(x, y);
             print_tile_at_position(x, y);
         }
 
-
-/*
- * Print the tile at position (x, y) to the current screen position.
- *
- * NOTE: Monsters and items also need to be considered in this function.
- */
-
+        /// <summary>
+        ///  Print the tile at position (x, y) to the current screen position.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <remarks>Monsters and items also need to be considered in this function.</remarks>
         private void print_tile_at_position(int x, int y)
         {
             if (x < 0 || y < 0 || x > Config.MAP_W || y > Config.MAP_H || !is_known(x, y))
             {
-                Terminal.set_color(Color.Black);
+                Terminal.set_color(ConsoleColor.Black);
                 Terminal.prtchar(' ');
             }
             else
             {
-                if (is_monster_at(x, y) && los(x, y))
+                if (_monsters.is_monster_at(x, y) && _monsters.los(x, y))
                 {
-                    monster m = get_monster_at(x, y);
+                    monster m = _monsters.get_monster_at(x, y);
 
-                    Terminal.set_color(monster_color(m->midx));
-                    Terminal.prtchar(monster_tile(m->midx));
+                    Terminal.set_color(_monsters.monster_color(m.midx));
+                    Terminal.prtchar(_monsters.monster_tile(m.midx));
                 }
                 else
                 {
@@ -655,7 +658,7 @@ namespace HackSharp
         /// 
         /// Note: it's important that 'map_cursor' is not called in this function since 'map_cursor' scrolls the screen if this is necessary.  Scrolling the screen entails a call to 'paint_map' and you'd have an endless loop.
         /// </summary>
-        private void paint_map()
+        internal void paint_map()
         {
             int x, y;
 
@@ -680,17 +683,17 @@ namespace HackSharp
             switch (tile)
             {
                 case Tiles.ROCK:
-                    Terminal.set_color(Color.DarkGray);
+                    Terminal.set_color(ConsoleColor.DarkGray);
                     break;
                 case Tiles.FLOOR:
-                    Terminal.set_color(Color.LightGray);
+                    Terminal.set_color(ConsoleColor.Gray);
                     break;
                 case Tiles.STAIR_UP:
                 case Tiles.STAIR_DOWN:
-                    Terminal.set_color(Color.White);
+                    Terminal.set_color(ConsoleColor.White);
                     break;
                 default:
-                    Terminal.set_color(Color.Brown);
+                    Terminal.set_color(ConsoleColor.DarkYellow);
                     break;
             }
         }

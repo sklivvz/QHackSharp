@@ -51,6 +51,13 @@
     <Compile Include="DungeonComplex.cs" />
     <Compile Include="Error.cs" />
     <Compile Include="Game.cs" />
+    <Compile Include="Misc.cs" />
+    <Compile Include="Monster.cs" />
+    <Compile Include="Monsters.cs" />
+    <Compile Include="monster_def.cs" />
+    <Compile Include="monster_rarity.cs" />
+    <Compile Include="monster_state.cs" />
+    <Compile Include="monster_struct.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

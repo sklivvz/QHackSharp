@@ -19,6 +19,7 @@
  * $3 (as of January, 1997).
  */
 
+using System;
 using System.Drawing;
 
 namespace HackSharp
@@ -31,11 +32,16 @@ namespace HackSharp
 
         private readonly DungeonComplex d;
         private readonly Dungeon _dungeon;
+        private Monsters _monsters;
 
-        public Game(Dungeon dungeon)
+        public Game(Dungeon dungeon, Monsters monsters)
         {
+            if (dungeon == null) throw new ArgumentNullException("dungeon");
+            if (monsters == null) throw new ArgumentNullException("monsters");
+
             _dungeon = dungeon;
             d = dungeon.d;
+            _monsters = monsters;
         }
 
         /// <summary>
@@ -43,7 +49,6 @@ namespace HackSharp
         /// </summary>
         internal void play()
         {
-            int opx;
             char c = '\0';
 
             /*
@@ -54,8 +59,8 @@ namespace HackSharp
             */
             d.dl = 0;
             _dungeon.build_map();
-            create_population();
-            build_monster_map();
+            _monsters.create_population();
+            _monsters.build_monster_map();
             d.visited[0] = true;
 
             /* Initial player position. */
@@ -80,7 +85,7 @@ namespace HackSharp
 
                 /* Display the player and center the cursor. */
                 map_cursor(d.px, d.py);
-                Terminal.set_color(Color.White);
+                Terminal.set_color(ConsoleColor.White);
                 Terminal.prtchar('@');
                 map_cursor(d.px, d.py);
 
@@ -95,10 +100,10 @@ namespace HackSharp
                 }
 
                 /* The message line should be cleared in any case. */
-                clear_messages();
+                Misc.clear_messages();
 
                 /* Memorize the old PC position. */
-                opx = d.px;
+                int opx = d.px;
                 int opy = d.py;
 
                 /* Act depending on the last key received. */
@@ -175,7 +180,7 @@ namespace HackSharp
                 d.opy = opy;
 
                 /* Remove the player character from the screen. */
-                print_tile(opx, opy);
+                _dungeon.print_tile(opx, opy);
             } while (c != 'Q');
         }
 
@@ -208,7 +213,7 @@ namespace HackSharp
 
             /* Repaint the whole screen map if necessary. */
             if (opsx != d.psx || opsy != d.psy)
-                paint_map();
+                _dungeon.paint_map();
 
             /* Make the immediate surroundings known. */
             for (px = x - 1; px <= x + 1; px++)
@@ -382,7 +387,7 @@ namespace HackSharp
         private void redraw()
         {
             clear_messages();
-            paint_map();
+            _dungeon.paint_map();
             update_necessary = true;
             update_player_status();
             Terminal.update();
@@ -401,7 +406,7 @@ namespace HackSharp
             _dungeon.build_map();
 
             /* Determine monster frequencies for the current dungeon level. */
-            initialize_monsters();
+            _monsters.initialize_monsters();
 
             /*
             * If a level is entered for the first time a new monster population
@@ -410,7 +415,7 @@ namespace HackSharp
             */
             if (!d.visited[d.dl])
             {
-                create_population();
+                _monsters.create_population();
                 d.visited[d.dl] = true;
 
                 /* Score some experience for exploring unknown depths. */
@@ -418,10 +423,10 @@ namespace HackSharp
             }
 
             /* Place monsters in the appropriate positions. */
-            build_monster_map();
+            _monsters.build_monster_map();
 
             /* Paint the new map. */
-            paint_map();
+            _dungeon.paint_map();
         }
 
         /// <summary>
@@ -430,7 +435,7 @@ namespace HackSharp
         private void descend_level()
         {
             if (_dungeon.tile_at(d.px, d.py) != Tiles.STAIR_DOWN)
-                you("don't see any stairs leading downwards.");
+                Misc.you("don't see any stairs leading downwards.");
             else
             {
                 modify_dungeon_level(+1);
@@ -445,7 +450,7 @@ namespace HackSharp
         private void ascend_level()
         {
             if (_dungeon.tile_at(d.px, d.py) != Tiles.STAIR_UP)
-                you("don't see any stairs leading upwards.");
+                Misc.you("don't see any stairs leading upwards.");
             else
             {
                 if (d.dl >0)
@@ -469,7 +474,7 @@ namespace HackSharp
             int tx, ty;
 
             /* Find the door. */
-            get_target(d.px, d.py, out tx, out ty);
+            Misc.get_target(d.px, d.py, out tx, out ty);
 
             /* Command aborted? */
             if (tx == -1 || ty == -1)
@@ -479,20 +484,20 @@ namespace HackSharp
             switch (_dungeon.tile_at(tx, ty))
             {
                 case Tiles.OPEN_DOOR:
-                    message("This door is already open.");
+                    Misc.message("This door is already open.");
                     break;
 
                 case Tiles.CLOSED_DOOR:
-                    you("open the door.");
+                    Misc.you("open the door.");
                     _dungeon.change_door(tx, ty, Tiles.OPEN_DOOR);
                     break;
 
                 case Tiles.LOCKED_DOOR:
-                    message("This door seems to be locked.");
+                    Misc.message("This door seems to be locked.");
                     break;
 
                 default:
-                    message("Which door?");
+                    Misc.message("Which door?");
                     break;
             }
         }
