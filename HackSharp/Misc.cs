@@ -48,16 +48,16 @@ namespace HackSharp
                 more();
 
             /* Position the cursor. */
-            Terminal.cursor(0, 0);
+            Terminal.Cursor(0, 0);
 
             /* Reset the color. */
-            Terminal.set_color(ConsoleColor.Gray);
+            Terminal.SetColor(ConsoleColor.Gray);
 
             /* Display the message. */
-            Terminal.prtstr(buffer);
+            Terminal.PrintString(buffer);
 
             /* Update the screen. */
-            Terminal.update();
+            Terminal.Update();
 
             /* Note the new message in the buffer. */
             mbuffer_full = true;
@@ -80,10 +80,10 @@ namespace HackSharp
         /// </summary>
         private static void more()
         {
-            Terminal.cursor(mbuffer_x, 0);
-            Terminal.set_color(ConsoleColor.White);
-            Terminal.prtstr("(more)");
-            while (Terminal.getkey() != ' ') ;
+            Terminal.Cursor(mbuffer_x, 0);
+            Terminal.SetColor(ConsoleColor.White);
+            Terminal.PrintString("(more)");
+            while (Terminal.GetKey() != ' ') ;
             clear_messages();
         }
 
@@ -92,8 +92,8 @@ namespace HackSharp
         /// </summary>
         internal static void clear_messages()
         {
-            Terminal.cursor(0, 0);
-            Terminal.clear_to_eol();
+            Terminal.Cursor(0, 0);
+            Terminal.ClearToEol();
             mbuffer_full = false;
             mbuffer_x = 0;
         }
@@ -113,7 +113,7 @@ namespace HackSharp
             y = yp;
 
             message("Which direction? ");
-            c = Terminal.getkey();
+            c = Terminal.GetKey();
             clear_messages();
 
             switch (c)
@@ -163,7 +163,7 @@ namespace HackSharp
                 int.TryParse(match.Groups[3].Value, out bonus);
 
             for (int i = 0; i < amount; i++)
-                roll += Terminal.rand_int(sides) + 1;
+                roll += Terminal.RandInt(sides) + 1;
 
             return roll + bonus;
         }

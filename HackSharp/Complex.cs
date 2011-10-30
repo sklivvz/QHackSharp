@@ -18,6 +18,9 @@
  * place.  These sources must not be distributed for any fees in excess of
  * $3 (as of January, 1997).
  */
+
+using System;
+
 namespace HackSharp
 {
     /*
@@ -43,31 +46,71 @@ namespace HackSharp
         /* The panel positions. */
         public byte psx;
         public byte psy;
-        public int px;
-        public int py;
-        public byte[] stxd = new byte[Config.MAX_DUNGEON_LEVEL - 1];
-        public byte[] stxu = new byte[Config.MAX_DUNGEON_LEVEL];
-        public byte[] styd = new byte[Config.MAX_DUNGEON_LEVEL - 1];
-        public byte[] styu = new byte[Config.MAX_DUNGEON_LEVEL];
+
+        //Player
+        public int PlayerX;
+        public int PlayerY;
+
+        //Stairs
+        public int[] StairsDownX = new int[Config.MaxDungeonLevel - 1];
+        public int[] StairsUpX = new int[Config.MaxDungeonLevel];
+        public int[] StairsDownY = new int[Config.MaxDungeonLevel - 1];
+        public int[] StairsUpY = new int[Config.MaxDungeonLevel];
 
         /* Level was already visited? */
-        public bool[] Visited = new bool[Config.MAX_DUNGEON_LEVEL];
+        public bool[] Visited = new bool[Config.MaxDungeonLevel];
 
         /* The knowledge map. */
-        public byte[, ,] Known = new byte[Config.MAX_DUNGEON_LEVEL, Config.MAP_BIT_W, Config.MAP_H];
+        public bool[, ,] Known = new bool[Config.MaxDungeonLevel, Config.MapW, Config.MapH];
 
         /* The player data. */
         public Player ThePlayer;
 
         /* NSECT_W * NSECT_H Sections for each level. */
-        public Section[, ,] s = new Section[Config.MAX_DUNGEON_LEVEL, Config.NSECT_W, Config.NSECT_H];
+        public Section[, ,] s = new Section[Config.MaxDungeonLevel, Config.NsectW, Config.NsectH];
 
         public Complex()
         {
-            for (int i = 0; i < Config.MAX_DUNGEON_LEVEL; i++)
-                for (int j = 0; j < Config.NSECT_W; j++)
-                    for (int k = 0; k < Config.NSECT_H; k++)
+            for (int i = 0; i < Config.MaxDungeonLevel; i++)
+                for (int j = 0; j < Config.NsectW; j++)
+                    for (int k = 0; k < Config.NsectH; k++)
                         s[i, j, k] = new Section();
+
+            /* Nothing is known about the dungeon at this point. */
+            for (int i = 0; i < Config.MaxDungeonLevel; i++)
+                for (int j = 0; j < Config.MapW; j++)
+                    for (int k = 0; k < Config.MapH; k++)
+                        Known[i, j, k] = false;
+        }
+
+        /// <summary>
+        /// Determine whether a given position is already known.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        internal bool IsKnown(int x, int y)
+        {
+            if (x < 0 || x >= Config.MapW)
+                throw new ArgumentOutOfRangeException("x", x, string.Format("x must be more than zero and less than {0}", Config.MapW));
+            if (y < 0 || y >= Config.MapH)
+                throw new ArgumentOutOfRangeException("y", y, string.Format("y must be more than zero and less than {0}", Config.MapH));
+            return Known[DungeonLevel, x, y];
+        }
+
+        /// <summary>
+        /// Set or reset a knowledge bit in the knowledge map.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="known"></param>
+        internal void SetKnowledge(int x, int y, bool known)
+        {
+            if (x < 0 || x >= Config.MapW)
+                throw new ArgumentOutOfRangeException("x", x, string.Format("x must be more than zero and less than {0}", Config.MapW));
+            if (y < 0 || y >= Config.MapH)
+                throw new ArgumentOutOfRangeException("y", y, string.Format("y must be more than zero and less than {0}", Config.MapH));
+            Known[DungeonLevel, x, y] = known;
         }
     }
 }

@@ -31,12 +31,12 @@ namespace HackSharp
         /// <param name="xp"></param>
         /// <param name="yp"></param>
         /// <remarks>Start at position (0, 0).</remarks>
-        public static void cursor(int xp, int yp)
+        public static void Cursor(int xp, int yp)
         {
             Console.SetCursorPosition(xp, yp);
         }
 
-        public static void set_color(ConsoleColor color)
+        public static void SetColor(ConsoleColor color)
         {
             Console.ForegroundColor = color;
         }
@@ -45,7 +45,7 @@ namespace HackSharp
         /// Print one character.
         /// </summary>
         /// <param name="c"></param>
-        public static void prtchar(char c)
+        public static void PrintChar(char c)
         {
             Console.Write(c);
         }
@@ -54,7 +54,7 @@ namespace HackSharp
         /// Read one character from the keyboard without echoing it.
         /// </summary>
         /// <returns></returns>
-        public static char getkey()
+        public static char GetKey()
         {
             return Console.ReadKey(true).KeyChar;
         }
@@ -63,7 +63,7 @@ namespace HackSharp
         /// Clear the screen.
         /// </summary>
         /// <remarks>The cursor is expected to be at position (0, 0) afterwards.</remarks>
-        public static void clear_screen()
+        public static void ClearScreen()
         {
             Console.Clear();
         }
@@ -71,7 +71,7 @@ namespace HackSharp
         /// <summary>
         /// Clear the current line up to its end without moving the cursor.
         /// </summary>
-        public static void clear_to_eol()
+        public static void ClearToEol()
         {
             //meh, will do if needed
         }
@@ -81,7 +81,7 @@ namespace HackSharp
         /// </summary>
         /// <param name="format"></param>
         /// <param name="values"></param>
-        public static void prtstr(string format, params object[] values)
+        public static void PrintString(string format, params object[] values)
         {
             Console.Write(format, values);
         }
@@ -91,7 +91,7 @@ namespace HackSharp
         /// </summary>
         /// <param name="max"></param>
         /// <returns></returns>
-        public static long rand_long(long max)
+        public static long RandLong(long max)
         {
             return (long)random.NextDouble() * max;
         }
@@ -101,7 +101,7 @@ namespace HackSharp
         /// </summary>
         /// <param name="max"></param>
         /// <returns></returns>
-        public static byte rand_byte(byte max)
+        public static byte RandByte(byte max)
         {
             return (byte)random.Next(max);
         }
@@ -111,7 +111,7 @@ namespace HackSharp
         /// </summary>
         /// <param name="max"></param>
         /// <returns></returns>
-        public static int rand_int(int max)
+        public static int RandInt(int max)
         {
             return random.Next(max);
         }
@@ -121,7 +121,7 @@ namespace HackSharp
         /// <summary>
         /// Initialize the random number generator.
         /// </summary>
-        public static void init_rand()
+        public static void InitRand()
         {
             random = new Random();
         }
@@ -129,7 +129,7 @@ namespace HackSharp
         /// <summary>
         /// Initialize the system-dependent I/O stuff.
         /// </summary>
-        public static void init_io()
+        public static void InitIO()
         {
             // Nothing to do
         }
@@ -137,18 +137,23 @@ namespace HackSharp
         /// <summary>
         /// Clean up the /IO stuff.
         /// </summary>
-        public static void clean_up_io()
+        public static void CleanUpIO()
         {
-            set_color(ConsoleColor.Gray);
-            clear_screen();
+            SetColor(ConsoleColor.Gray);
+            ClearScreen();
         }
 
         /// <summary>
         /// Update the screen.
         /// </summary>
-        public static void update()
+        public static void Update()
         {
             //Do nothing.
+        }
+
+        public static void StandardPrintString(string message)
+        {
+            Console.Write(message);
         }
     }
 }

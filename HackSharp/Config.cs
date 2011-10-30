@@ -32,8 +32,8 @@ namespace HackSharp
          * distribution.
          */
 
-        public const int MAJOR_VERSION = 0;
-        public const int MINOR_VERSION = 1;
+        public const int MajorVersion = 0;
+        public const int MinorVersion = 1;
 
 
         /*
@@ -48,52 +48,52 @@ namespace HackSharp
          */
 
         /* Screen width. */
-        public const int SCREEN_W = 80;
+        public const int ScreenW = 80;
 
         /* Screen height. */
-        public const int SCREEN_H = 25;
+        public const int ScreenH = 25;
 
         /* Section width. */
-        public const int SECT_W = 15;
+        public const int SectW = 15;
 
         /* Section height. */
-        public const int SECT_H = 12;
+        public const int SectH = 12;
 
         /* Number of sections in E/W direction. */
-        public const int NSECT_W = 7;
+        public const int NsectW = 7;
 
         /* Number of sections in N/S direction. */
-        public const int NSECT_H = 4;
+        public const int NsectH = 4;
 
         /* Total number of sections per level. */
-        public const int SECT_NUMBER = (NSECT_H*NSECT_W);
+        public const int SectNumber = (NsectH*NsectW);
 
         /* Map width. */
-        public const int MAP_W = (SECT_W*NSECT_W);
+        public const int MapW = (SectW*NsectW);
 
         /* Map height (must be divisable by NSECT_H). */
-        public const int MAP_H = (SECT_H*NSECT_H);
+        public const int MapH = (SectH*NsectH);
 
         /* Visible map width. */
-        public const int VMAP_W = 80;
+        public const int VmapW = 80;
 
         /* Visible map height. */
-        public const int VMAP_H = 22;
+        public const int VmapH = 22;
 
         /* Maximum width for a room. */
-        public const int ROOM_W = (SECT_W - 2);
+        public const int RoomW = (SectW - 2);
 
         /* Maximum height for a room. */
-        public const int ROOM_H = (SECT_H - 2);
+        public const int RoomH = (SectH - 2);
 
         /* Bitmap width for the knowledge map. */
-        public const int MAP_BIT_W = ((MAP_W >> 3) + 1);
+        public const int MapBitW = ((MapW >> 3) + 1);
 
         /* Maximum number of monsters per level. */
-        public const int MONSTERS_PER_LEVEL = 64;
+        public const int MonstersPerLevel = 64;
 
         /* The initial number of monsters on a new level. */
-        public const int INITIAL_MONSTER_NUMBER = 24;
+        public const int InitialMonsterNumber = 24;
 
         /*
          * Dungeon depth.
@@ -102,7 +102,7 @@ namespace HackSharp
          * code depend on a dungeon with 26 levels.
          */
 
-        public const int MAX_DUNGEON_LEVEL = 26;
+        public const int MaxDungeonLevel = 26;
 
 
         /*
@@ -110,9 +110,9 @@ namespace HackSharp
          */
 
         /* The length of the name of your character. */
-        public const int MAX_PC_NAME_LENGTH = 20;
+        public const int MaxPcNameLength = 20;
 
         /* The number of training units you can distribute. */
-        public const int TUNITS = 100;
+        public const int Tunits = 100;
     }
 }

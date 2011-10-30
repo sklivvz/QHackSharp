@@ -28,7 +28,7 @@ namespace HackSharp
     /// </summary>
     public class Player
     {
-        internal const int MaxSkills = 11;
+        internal  int MaxSkills = TskillS.Length;
         private const int MaxAttribute = 6;
 
         private static readonly string[] TskillS =
@@ -43,10 +43,10 @@ namespace HackSharp
         /* Attribute scores and maximum attribute scores ever reached. */
         private readonly byte[] _attributes = new byte[MaxAttribute];
         private readonly byte[] _maxAttributes = new byte[MaxAttribute];
-        private readonly int[] _tskillExp = new int[MaxSkills];
+        private readonly int[] _tskillExp = new int[TskillS.Length];
 
         /* Training adjustment. */
-        private readonly int[] _tskillTraining = new int[MaxSkills];
+        private readonly int[] _tskillTraining = new int[TskillS.Length];
         private int _experience;
         private Game _game;
 
@@ -111,7 +111,7 @@ namespace HackSharp
 
             /* The number of training units initially used. */
             for (i = (int) TrainingSkills.T_MANA + 1; i < MaxSkills; i++)
-                _tskillTraining[i] = Config.TUNITS/(MaxSkills - (int) TrainingSkills.T_MANA - 1);
+                _tskillTraining[i] = Config.Tunits/(MaxSkills - (int) TrainingSkills.T_MANA - 1);
 
             /* Searching skill. */
             _searching = (byte) (GetAttribute(Attributes.Intelligence) +
@@ -152,9 +152,9 @@ namespace HackSharp
         {
             if (_updateNecessary)
             {
-                Terminal.cursor(0, 24);
-                Terminal.set_color(ConsoleColor.Gray);
-                Terminal.prtstr(
+                Terminal.Cursor(0, 24);
+                Terminal.SetColor(ConsoleColor.Gray);
+                Terminal.PrintString(
                     "{0}   St:{1}  In:{2}  Dx:{3}  To:{4}  Ma:{5}  H:{6}({7})  P:{8}({9})  X:{10}"
                     , _name
                     , (int) _attributes[(int) Attributes.Strength]
@@ -167,7 +167,7 @@ namespace HackSharp
                     , _power
                     , _maxPower
                     , (long) _experience);
-                Terminal.clear_to_eol();
+                Terminal.ClearToEol();
 
                 _updateNecessary = false;
             }
@@ -182,7 +182,7 @@ namespace HackSharp
             int i;
             int expLength;
             int unitLength;
-            byte pos = 0; /* Initial menu position. */
+            int pos = 0; /* Initial menu position. */
 
             /*
              * Determine the maximum training skill length.  This could be a hard-coded
@@ -192,12 +192,12 @@ namespace HackSharp
              * In the same run we count the number of training units spent.
              */
             int length = expLength = unitLength = 0;
-            int remainingUnits = Config.TUNITS;
+            int remainingUnits = Config.Tunits;
             for (i = 0; i < MaxSkills; i++)
             {
                 length = Misc.imax(length, (TskillS[i]).Length);
-                expLength = Misc.imax(expLength, (_tskillExp[i]/Config.TUNITS).ToString().Length);
-                unitLength = Misc.imax(unitLength, (RequiredExp((TrainingSkills) i)/Config.TUNITS).ToString().Length);
+                expLength = Misc.imax(expLength, (_tskillExp[i]/Config.Tunits).ToString().Length);
+                unitLength = Misc.imax(unitLength, (RequiredExp((TrainingSkills) i)/Config.Tunits).ToString().Length);
                 remainingUnits -= _tskillTraining[i];
             }
 
@@ -209,7 +209,7 @@ namespace HackSharp
                 /* Draw the menu. */
                 if (doRedraw)
                 {
-                    Terminal.set_color(ConsoleColor.Gray);
+                    Terminal.SetColor(ConsoleColor.Gray);
 
                     int trainingLength = 0;
                     for (i = 0; i < MaxSkills; i++)
@@ -217,32 +217,28 @@ namespace HackSharp
                                                    _tskillTraining[i].ToString().Length);
                     for (i = 0; i < MaxSkills; i++)
                     {
-                        Terminal.cursor(3, i);
-                        Terminal.prtstr("    %*s: %*ld of %*ld [%*Complex]: %Complex   "
-                                        , length
-                                        , TskillS[i]
-                                        , expLength
-                                        , (long) _tskillExp[i]/Config.TUNITS
-                                        , unitLength
-                                        , RequiredExp((TrainingSkills) i)/Config.TUNITS
-                                        , trainingLength
-                                        , _tskillTraining[i]
+                        Terminal.Cursor(3, i);
+                        
+                        Terminal.PrintString("    {0}: {1} of {2} [{3}]: {4}"
+                                        , TskillS[i].PadLeft(length)
+                                        , ((long) _tskillExp[i] / Config.Tunits).ToString().PadLeft(expLength)
+                                        , (RequiredExp((TrainingSkills)i) / Config.Tunits).ToString().PadLeft(unitLength)
+                                        , (_tskillTraining[i]).ToString().PadLeft(trainingLength)
                                         , CurrentLevel((TrainingSkills) i));
                     }
-                    Terminal.cursor(0, 24);
-                    Terminal.prtstr(" [iI] Up -- [kK] Down -- [jJ] Decrease -- [lL] Increase");
-                    Terminal.prtstr(" -- Units: %Complex", remainingUnits);
-                    Terminal.clear_to_eol();
+                    Terminal.Cursor(0, 24);
+                    Terminal.PrintString(" [iI] Up -- [kK] Down -- [jJ] Decrease -- [lL] Increase -- Units: {0}", remainingUnits);
+                    Terminal.ClearToEol();
                     doRedraw = false;
                 }
 
-                Terminal.cursor(4, pos);
-                Terminal.prtstr("->");
-                Terminal.update();
-                c = Terminal.getkey();
-                Terminal.cursor(4, pos);
-                Terminal.prtstr("  ");
-                Terminal.update();
+                Terminal.Cursor(4, pos);
+                Terminal.PrintString("->");
+                Terminal.Update();
+                c = Terminal.GetKey();
+                Terminal.Cursor(4, pos);
+                Terminal.PrintString("  ");
+                Terminal.Update();
 
                 switch (c)
                 {
@@ -320,35 +316,35 @@ namespace HackSharp
             switch (i)
             {
                 case TrainingSkills.T_STRENGTH:
-                    return (_attributes[(int) Attributes.Strength] + 1)*65*Config.TUNITS;
+                    return (_attributes[(int) Attributes.Strength] + 1)*65*Config.Tunits;
 
                 case TrainingSkills.T_INTELLIGENCE:
-                    return (_attributes[(int) Attributes.Intelligence] + 1)*60*Config.TUNITS;
+                    return (_attributes[(int) Attributes.Intelligence] + 1)*60*Config.Tunits;
 
                 case TrainingSkills.T_DEXTERITY:
-                    return (_attributes[(int) Attributes.Dexterity] + 1)*60*Config.TUNITS;
+                    return (_attributes[(int) Attributes.Dexterity] + 1)*60*Config.Tunits;
 
                 case TrainingSkills.T_TOUGHNESS:
-                    return (_attributes[(int) Attributes.Toughness] + 1)*60*Config.TUNITS;
+                    return (_attributes[(int) Attributes.Toughness] + 1)*60*Config.Tunits;
 
                 case TrainingSkills.T_MANA:
-                    return (_attributes[(int) Attributes.Mana] + 1)*55*Config.TUNITS;
+                    return (_attributes[(int) Attributes.Mana] + 1)*55*Config.Tunits;
 
                 case TrainingSkills.T_HITS:
-                    return (_maxHits + 1)*Config.TUNITS;
+                    return (_maxHits + 1)*Config.Tunits;
 
                 case TrainingSkills.T_POWER:
-                    return (_maxPower + 1)*Config.TUNITS;
+                    return (_maxPower + 1)*Config.Tunits;
 
                 case TrainingSkills.T_2HIT:
-                    return (((_toHit + 1)*(_toHit + 2)) >> 1)*5*Config.TUNITS;
+                    return (((_toHit + 1)*(_toHit + 2)) >> 1)*5*Config.Tunits;
 
                 case TrainingSkills.T_2DAMAGE:
                     return (((_toDamage + 1)*(_toDamage + 2)) >> 1)
-                           *25*Config.TUNITS;
+                           *25*Config.Tunits;
 
                 case TrainingSkills.T_SEARCHING:
-                    return (_searching + 1)*Config.TUNITS;
+                    return (_searching + 1)*Config.Tunits;
             }
 
             return 0;

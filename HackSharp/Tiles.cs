@@ -5,13 +5,13 @@
     /// </summary>
     public static class Tiles
     {
-        public const byte NO_DOOR = 255;
-        public const char OPEN_DOOR = '/';
-        public const char CLOSED_DOOR = '+';
-        public const char LOCKED_DOOR = '\\';
-        public const char ROCK = '#';
-        public const char FLOOR = '.';
-        public const char STAIR_DOWN = '>';
-        public const char STAIR_UP = '<';
+        public const byte NoDoor = 255;
+        public const char OpenDoor = '/';
+        public const char ClosedDoor = '+';
+        public const char LockedDoor = '\\';
+        public const char Rock = '#';
+        public const char Floor = '.';
+        public const char StairDown = '>';
+        public const char StairUp = '<';
     }
 }

@@ -50,30 +50,30 @@ namespace HackSharp
             if (args.Length > 1)
                 return;
 
-            stdprtstr("Setting up the game...");
+            Terminal.StandardPrintString("Setting up the game...");
 
             /* Initialize everything. */
-            stdprtstr(".");
-            Terminal.init_rand();
-            stdprtstr(".");
+            Terminal.StandardPrintString(".");
+            Terminal.InitRand();
+            Terminal.StandardPrintString(".");
             var player = new Player();
             var dungeon = new Dungeon();
             var monsters = new Monsters();
             var game = new Game(dungeon, monsters);
             monsters.InitMonsters(dungeon);
-            stdprtstr(".");
+            Terminal.StandardPrintString(".");
             dungeon.InitDungeon(monsters, player);
-            stdprtstr(".");
+            Terminal.StandardPrintString(".");
             player.InitPlayer(game);
-            stdprtstr(".");
-            Terminal.init_io();
+            Terminal.StandardPrintString(".");
+            Terminal.InitIO();
             InitScreen();
 
             /* Play the game. */
-            game.play();
+            game.Play();
 
             /* Clean up. */
-            Terminal.clean_up_io();
+            Terminal.CleanUpIO();
 
             /* Be done. */
             return;
@@ -87,10 +87,7 @@ namespace HackSharp
 
         }
 
-        private static void stdprtstr(string message)
-        {
-            Console.Write(message);
-        }
+
 
 
         /// <summary>
@@ -98,19 +95,19 @@ namespace HackSharp
         /// </summary>
         private static void InitScreen()
         {
-            Terminal.clear_screen();
-            string s = String.Format("-----====<<<<< QHack {0}.{1} >>>>>====-----", Config.MAJOR_VERSION, Config.MINOR_VERSION);
-            Terminal.cursor((80 - s.Length) >> 1, 3);
-            Terminal.prtstr("{0}", s);
-            Terminal.cursor(16, 5);
-            Terminal.prtstr("(The Quickest Roguelike Gaming Hack on the Net)");
-            Terminal.cursor(19, 8);
-            Terminal.prtstr("(C) Copyright 1996, 1997 by Thomas Biskup.");
-            Terminal.cursor(30, 9);
-            Terminal.prtstr("All Rights Reserved.");
-            Terminal.cursor(0, 24);
-            Terminal.prtstr("Email comments/suggestions/bug reports to ............... rpg@saranxis.ruhr.de");
-            Terminal.getkey();
+            Terminal.ClearScreen();
+            string s = String.Format("-----====<<<<< QHack {0}.{1} >>>>>====-----", Config.MajorVersion, Config.MinorVersion);
+            Terminal.Cursor((80 - s.Length) >> 1, 3);
+            Terminal.PrintString("{0}", s);
+            Terminal.Cursor(16, 5);
+            Terminal.PrintString("(The Quickest Roguelike Gaming Hack on the Net)");
+            Terminal.Cursor(19, 8);
+            Terminal.PrintString("(C) Copyright 1996, 1997 by Thomas Biskup.");
+            Terminal.Cursor(30, 9);
+            Terminal.PrintString("All Rights Reserved.");
+            Terminal.Cursor(0, 24);
+            Terminal.PrintString("Email comments/suggestions/bug reports to ............... rpg@saranxis.ruhr.de");
+            Terminal.GetKey();
         }
     }
 }
