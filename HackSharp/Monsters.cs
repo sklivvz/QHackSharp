@@ -146,7 +146,7 @@ namespace HackSharp
                 return true;
 
             /* In the same room section? */
-            return (_dungeon.GetCurrentSection(p).Equals(_dungeon.GetCurrentSection(_dungeon.TheComplex.PlayerPos)) && _dungeon.GetCurrentSection(p).X != -1);
+            return _dungeon.TheComplex.CurrentLevel.GetSection(p).Equals(_dungeon.TheComplex.GetPlayerSection());
         }
 
         /// <summary>

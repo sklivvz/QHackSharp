@@ -12,7 +12,7 @@
  * All Rights Reserved.
  *
  * This software may be distributed only for educational, research and
- * other non-proft purposes provided that this copyright notice is left
+ * other non-profit purposes provided that this copyright notice is left
  * intact.  If you derive a new game from these sources you also are
  * required to give credit to Thomas Biskup for creating them in the first
  * place.  These sources must not be distributed for any fees in excess of
@@ -34,9 +34,6 @@ namespace HackSharp
 
         public Game(Dungeon dungeon, Monsters monsters)
         {
-            if (dungeon == null) throw new ArgumentNullException("dungeon");
-            if (monsters == null) throw new ArgumentNullException("monsters");
-
             _dungeon = dungeon;
             _d = dungeon.TheComplex;
             _monsters = monsters;
@@ -55,17 +52,11 @@ namespace HackSharp
             * XXXX: Once it is possible to save/restore the map this no longer
             *       must be done if the game was started by restoring a save file.
             */
-            _d.DungeonLevel = 0;
             _dungeon.BuildMap();
             _monsters.CreatePopulation();
             _monsters.BuildMonsterMap();
-            _d.Visited[0] = true;
 
-            /* Initial player position. */
-            _d.PlayerPos = _d.OldPlayerPos = _d.StairsUp[0];
-
-            /* Initial panel position. */
-            _d.PanelPos = new Position(0,0);
+            _d.Play();
 
             /*
             * Standard stuff.
@@ -200,7 +191,7 @@ namespace HackSharp
         private void UpdateScreen(Position p)
         {
             /* Find the current general section. */
-            Position p1 = _dungeon.GetCurrentSectionCoordinates(_d.PlayerPos);
+            Position p1 = Level.GetCurrentSectionCoordinates(_d.PlayerPos);
 
             /* Memorize the old panel view. */
             var oldPos = _d.PanelPos;
@@ -227,12 +218,12 @@ namespace HackSharp
                 }
 
             /* Check whether the PC is in a room or not. */
-            var currentSection = _dungeon.GetCurrentSection(_d.PlayerPos);
+            var currentSection = _d.GetPlayerSection();
 
             /* Make rooms known. */
             if (!currentSection.Equals(Position.Empty))
             {
-                _dungeon.KnowSection(currentSection);
+                _dungeon.KnowSection(_d.CurrentLevel,currentSection);
             }
         }
 
@@ -247,14 +238,7 @@ namespace HackSharp
         ///...a room is entered or left.</remarks>
         private void Try(Direction dir)
         {
-            int sx1;
-            int sy1;
-            int sx2;
-            int sy2;
-
-            var temp = _dungeon.GetCurrentSection(_d.PlayerPos);
-            sx1 = temp.X;
-            sy1 = temp.Y;
+            var orgSection = _d.GetPlayerSection();
 
             /* 
             * Check whether running should be stopped.
@@ -306,7 +290,7 @@ namespace HackSharp
                     }
 
                     /* Check whether we are still in a room. */
-                    _walkMode &= (sx1 != -1 && sy1 != -1);
+                    _walkMode &= (orgSection.X != -1 && orgSection.Y != -1);
 
                     /* Check for special features. */
                     if (_walkSteps > 0)
@@ -389,13 +373,11 @@ namespace HackSharp
             }
 
             /* Find the new section. */
-            var temp1 = _dungeon.GetCurrentSection(_d.PlayerPos);
-            sx2 = temp1.X;
-            sy2 = temp1.Y;
+            var playerSection = _dungeon.TheComplex.GetPlayerSection();
 
             /* Entering/leaving a room will deactivate walk-mode. */
             if (_walkSteps > 0)
-                _walkMode &= (sx1 == sx2 && sy1 == sy2);
+                _walkMode &= (orgSection.X == playerSection.X && orgSection.Y == playerSection.Y);
 
             /* Increase the number of steps actually walked. */
             _walkSteps++;
@@ -416,12 +398,8 @@ namespace HackSharp
         /// <summary>
         /// Switch between dungeon levels.
         /// </summary>
-        /// <param name="mod"></param>
-        private void ModifyDungeonLevel(int mod)
+        private void InitLevel()
         {
-            /* Modify the actual dungeon level. */
-            _d.DungeonLevel += mod;
-
             /* Build the current dungeon map from the general description. */
             _dungeon.BuildMap();
 
@@ -433,13 +411,13 @@ namespace HackSharp
             * will be generated and the player receives a little bit of experience
             * for going where nobody went before (or at least managed to come back).
             */
-            if (!_d.Visited[_d.DungeonLevel])
+            if (!_d.CurrentLevel.Visited)
             {
                 _monsters.CreatePopulation();
-                _d.Visited[_d.DungeonLevel] = true;
+                _d.CurrentLevel.Visited = true;
 
                 /* Score some experience for exploring unknown depths. */
-                _dungeon.TheComplex.ThePlayer.ScoreExp(_d.DungeonLevel);
+                _d.ThePlayer.ScoreExp(_d.DungeonLevel);
             }
 
             /* Place monsters in the appropriate positions. */
@@ -459,8 +437,8 @@ namespace HackSharp
                 Misc.You("don't see any stairs leading downwards.");
             else
             {
-                ModifyDungeonLevel(1);
-                _d.PlayerPos = _d.StairsUp[_d.DungeonLevel];
+                _d.DescendLevel();
+                InitLevel();
             }
         }
 
@@ -474,14 +452,11 @@ namespace HackSharp
                 Misc.You("don't see any stairs leading upwards.");
             else
             {
+                _d.AscendLevel();
                 if (_d.DungeonLevel > 0)
                 {
-                    ModifyDungeonLevel(-1);
-                    _d.PlayerPos = _d.StairsDown[_d.DungeonLevel];
+                    InitLevel();
                 }
-                else
-                    /* Leave the dungeon. */
-                    _d.DungeonLevel = -1;
             }
         }
 
@@ -530,7 +505,7 @@ namespace HackSharp
             _walkMode = true;
 
             /* Check for a room. */
-            _walkInRoom = !_dungeon.GetCurrentSection(_d.PlayerPos).Equals(Position.Empty);
+            _walkInRoom = !_dungeon.TheComplex.GetPlayerSection().Equals(Position.Empty);
         }
     }
 }

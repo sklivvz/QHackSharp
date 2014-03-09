@@ -47,11 +47,6 @@ namespace HackSharp
          * right now -- this should nonetheless be sufficient.
          */
 
-        /* Screen width. */
-        public const int ScreenW = 80;
-
-        /* Screen height. */
-        public const int ScreenH = 25;
 
         /* Section width. */
         public const int SectW = 15;

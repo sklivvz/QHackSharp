@@ -1,4 +1,108 @@
-﻿/*                               -*- Mode: C -*- 
+﻿namespace HackSharp
+{
+    public class Complex
+    {
+        /* The current level number. */
+        public Level[] Levels { get; private set; }
+
+        /* The player data. */
+        public Player ThePlayer;
+
+
+        public int DungeonLevel { get; private set; }
+
+        /* Last player Coordinates. */
+        public Position OldPlayerPos { get; set; }
+
+        /* The panel position. */
+        public Position PanelPos { get; set; }
+
+        //Player
+        public Position PlayerPos { get; set; }
+
+
+        //Stairs
+
+        public Level CurrentLevel
+        {
+            get { return Levels[DungeonLevel]; }
+        }
+
+        public void Play()
+        {
+            DungeonLevel = 0;
+            CurrentLevel.Visited = true;
+
+            /* Initial player position. */
+            PlayerPos = OldPlayerPos = CurrentLevel.StairsUp;
+
+            /* Initial panel position. */
+            PanelPos = new Position(0, 0);
+        }
+
+        /// <summary>
+        ///     Continue one level downwards.
+        /// </summary>
+        public void DescendLevel()
+        {
+            DungeonLevel++;
+            PlayerPos = CurrentLevel.StairsUp;
+        }
+
+        /// <summary>
+        ///     Continue one level upwards.
+        /// </summary>
+        public void AscendLevel()
+        {
+            if (DungeonLevel > 0)
+            {
+                DungeonLevel--;
+                PlayerPos = CurrentLevel.StairsDown;
+            }
+            else
+            {
+                /* Leave the dungeon. */
+                DungeonLevel = -1;
+            }
+        }
+
+        /// <summary>
+        ///     Create all the levels in the dungeon.
+        /// </summary>
+        public void Dig()
+        {
+            Levels = new Level[Config.MaxDungeonLevel];
+            for (int i = 0; i<Config.MaxDungeonLevel; i++) Levels[i] = new Level();
+            Levels[Config.MaxDungeonLevel - 1].IsBottom = true;
+            Levels[0].IsTop = true;
+            for (int i = 0; i < Config.MaxDungeonLevel; i++)
+            {
+                /* Basic initialization. */
+                /* Create the current level map. */
+                Levels[i].Dig();
+
+                /* Note the current level as unvisited. */
+                Levels[i].Visited = false;
+            }
+        }
+
+
+ 
+
+
+        /// <summary>
+        /// Calculate the current section coordinates of the player*if* the current section contains a room and the given position is in that room.
+        /// </summary>
+        internal Position GetPlayerSection()
+        {
+            return CurrentLevel.GetSection(PlayerPos);
+        }
+    }
+}
+
+// original notice
+
+/*                               -*- Mode: C -*- 
  * qhack.h -- 
  * ITIID           : $ITI$ $Header $__Header$
  * Author          : Thomas Biskup
@@ -18,65 +122,3 @@
  * place.  These sources must not be distributed for any fees in excess of
  * $3 (as of January, 1997).
  */
-
-using System;
-using System.Linq;
-
-namespace HackSharp
-{
-    /*
-     * QHack uses one large structure for the complete dungeon.  There are
-     * no pointers or other fancy stuff involved since this game should be
-     * simple and easy to use.
-     *
-     * Naturally this prevents some useful things and is not the way a big
-     * roguelike game should be written (you sacrifice too much in flexibility),
-     * but since it's easy to use I headed into this direction.
-     */
-
-    public class Complex
-    {
-        /* The current level number. */
-        public int DungeonLevel;
-
-        /* Last player Coordinates. */
-        public Position OldPlayerPos { get; set; }
-
-        /* The panel position. */
-        public Position PanelPos { get; set; }
-
-        //Player
-        public Position PlayerPos { get; set; }
-
-
-        //Stairs
-        public Position[] StairsDown = new Position[Config.MaxDungeonLevel - 1];
-        public Position[] StairsUp = new Position[Config.MaxDungeonLevel];
-
-        /* Level was already visited? */
-        public bool[] Visited = new bool[Config.MaxDungeonLevel];
-
-        /* The knowledge map. */
-        public bool[, ,] Known = new bool[Config.MaxDungeonLevel, Config.MapW, Config.MapH];
-
-        /* The player data. */
-        public Player ThePlayer;
-
-        /* NSECT_W * NSECT_H Sections for each level. */
-        public Section[, ,] s = new Section[Config.MaxDungeonLevel, Config.NsectW, Config.NsectH];
-
-        public Complex()
-        {
-            for (int i = 0; i < Config.MaxDungeonLevel; i++)
-                for (int j = 0; j < Config.NsectW; j++)
-                    for (int k = 0; k < Config.NsectH; k++)
-                        s[i, j, k] = new Section();
-
-            /* Nothing is known about the dungeon at this point. */
-            for (int i = 0; i < Config.MaxDungeonLevel; i++)
-                for (int j = 0; j < Config.MapW; j++)
-                    for (int k = 0; k < Config.MapH; k++)
-                        Known[i, j, k] = false;
-        }
-    }
-}
