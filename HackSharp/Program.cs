@@ -66,7 +66,6 @@ namespace HackSharp
             Terminal.StandardPrintString(".");
             player.InitPlayer(game);
             Terminal.StandardPrintString(".");
-            Terminal.InitIO();
             InitScreen();
 
             /* Play the game. */
@@ -80,6 +79,13 @@ namespace HackSharp
             }
             catch (Exception ex)
             {
+                try
+                {
+                    Terminal.CleanUpIO();
+                }
+                catch
+                {
+                }
 
                 Console.WriteLine(ex);
                 Console.ReadLine();

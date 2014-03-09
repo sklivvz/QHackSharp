@@ -127,14 +127,6 @@ namespace HackSharp
         }
 
         /// <summary>
-        /// Initialize the system-dependent I/O stuff.
-        /// </summary>
-        public static void InitIO()
-        {
-            // Nothing to do
-        }
-
-        /// <summary>
         /// Clean up the /IO stuff.
         /// </summary>
         public static void CleanUpIO()

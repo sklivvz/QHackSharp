@@ -20,6 +20,7 @@
  */
 
 using System;
+using System.Linq;
 
 namespace HackSharp
 {
@@ -39,23 +40,18 @@ namespace HackSharp
         public int DungeonLevel;
 
         /* Last player Coordinates. */
-        public int OldPlayerX;
-        public int OldPlayerY;
+        public Position OldPlayerPos { get; set; }
 
-
-        /* The panel positions. */
-        public byte psx;
-        public byte psy;
+        /* The panel position. */
+        public Position PanelPos { get; set; }
 
         //Player
-        public int PlayerX;
-        public int PlayerY;
+        public Position PlayerPos { get; set; }
+
 
         //Stairs
-        public int[] StairsDownX = new int[Config.MaxDungeonLevel - 1];
-        public int[] StairsUpX = new int[Config.MaxDungeonLevel];
-        public int[] StairsDownY = new int[Config.MaxDungeonLevel - 1];
-        public int[] StairsUpY = new int[Config.MaxDungeonLevel];
+        public Position[] StairsDown = new Position[Config.MaxDungeonLevel - 1];
+        public Position[] StairsUp = new Position[Config.MaxDungeonLevel];
 
         /* Level was already visited? */
         public bool[] Visited = new bool[Config.MaxDungeonLevel];
@@ -81,36 +77,6 @@ namespace HackSharp
                 for (int j = 0; j < Config.MapW; j++)
                     for (int k = 0; k < Config.MapH; k++)
                         Known[i, j, k] = false;
-        }
-
-        /// <summary>
-        /// Determine whether a given position is already known.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <returns></returns>
-        internal bool IsKnown(int x, int y)
-        {
-            if (x < 0 || x >= Config.MapW)
-                throw new ArgumentOutOfRangeException("x", x, string.Format("x must be more than zero and less than {0}", Config.MapW));
-            if (y < 0 || y >= Config.MapH)
-                throw new ArgumentOutOfRangeException("y", y, string.Format("y must be more than zero and less than {0}", Config.MapH));
-            return Known[DungeonLevel, x, y];
-        }
-
-        /// <summary>
-        /// Set or reset a knowledge bit in the knowledge map.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <param name="known"></param>
-        internal void SetKnowledge(int x, int y, bool known)
-        {
-            if (x < 0 || x >= Config.MapW)
-                throw new ArgumentOutOfRangeException("x", x, string.Format("x must be more than zero and less than {0}", Config.MapW));
-            if (y < 0 || y >= Config.MapH)
-                throw new ArgumentOutOfRangeException("y", y, string.Format("y must be more than zero and less than {0}", Config.MapH));
-            Known[DungeonLevel, x, y] = known;
         }
     }
 }

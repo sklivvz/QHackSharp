@@ -19,7 +19,9 @@
  * $3 (as of January, 1997).
  */
 
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -28,7 +30,7 @@ namespace HackSharp
     /// <summary>
     /// A structure for a given monster.
     /// </summary>
-    struct Monster
+    public class Monster
     {
         /* Is the entry occupied by a monster? */
         internal bool Used { get; set; }
@@ -37,8 +39,17 @@ namespace HackSharp
         internal int Midx { get; set; }
 
         /* Position on the map. */
-        internal int X { get; set; }
-        internal int Y { get; set; }
+
+        internal int X
+        {
+            get { return Position.X; }
+        }
+
+        internal int Y {
+            get { return Position.Y; }
+        }
+
+        internal Position Position { get; set; }
 
         /* Hitpoint data. */
         internal int Hp { get; set; }
@@ -46,5 +57,43 @@ namespace HackSharp
 
         /* The current state (see above). */
         internal MonsterState State { get; set; }
+
+        /// <summary>
+        /// Return the color for this monster.
+        /// </summary>
+        /// <returns></returns>
+        internal ConsoleColor Color
+        {
+            get { return MonsterDefinition.Manual[Midx].Color; }
+        }
+
+        /// <summary>
+        /// Return the picture for this monster.
+        /// </summary>
+        /// <returns></returns>
+        internal char Tile
+        {
+            get
+            {
+                return MonsterDefinition.Manual[Midx].Symbol;
+            }
+        }
+
+        public Monster()
+        {
+        }
+
+        public Monster(int monsterType, Position position)
+        {
+            Used = true;
+            Midx = monsterType;
+            Position= position;
+            var hp = MonsterDefinition.Manual[monsterType].RollHp();
+            Hp = hp;
+            MaxHp = hp;
+            State = MonsterState.Asleep;
+        }
+
+
     };
 }

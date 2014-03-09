@@ -38,14 +38,14 @@ namespace HackSharp
         /// <param name="format"></param>
         /// <param name="values"></param>
         /// <remarks>The color will be reset to light gray and the message buffer will be cleared if it was full.</remarks>
-        internal static void message(string format, params object[] values)
+        internal static void Message(string format, params object[] values)
         {
 
             string buffer = string.Format(format, values);
 
             /* Clear the message buffer if necessary. */
             if (mbuffer_full)
-                more();
+                More();
 
             /* Position the cursor. */
             Terminal.Cursor(0, 0);
@@ -70,15 +70,15 @@ namespace HackSharp
         /// </summary>
         /// <param name="format"></param>
         /// <param name="values"></param>
-        internal static void you(string format, params object[] values)
+        internal static void You(string format, params object[] values)
         {
-            message("You " + format, values);
+            Message("You " + format, values);
         }
 
         /// <summary>
         /// Display a (more) prompt at the appropriate position in the message buffer and aftwards clear the message buffer.
         /// </summary>
-        private static void more()
+        private static void More()
         {
             Terminal.Cursor(mbuffer_x, 0);
             Terminal.SetColor(ConsoleColor.White);
@@ -101,42 +101,28 @@ namespace HackSharp
         /// <summary>
         /// Get a target position starting from a base position at (xp, yp).
         /// </summary>
-        /// <param name="xp"></param>
-        /// <param name="yp"></param>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        internal static void get_target(int xp, int yp, out int x, out int y)
+        internal static Position GetTarget(Position p)
         {
-            char c;
-
-            x = xp;
-            y = yp;
-
-            message("Which direction? ");
-            c = Terminal.GetKey();
+            Message("Which direction? ");
+            char c = Terminal.GetKey();
             clear_messages();
 
             switch (c)
             {
                 case 'i':
-                    (y)--;
-                    break;
+                    return p.North();
 
                 case 'j':
-                    (x)--;
-                    break;
+                    return p.South();
 
                 case 'k':
-                    (y)++;
-                    break;
+                    return p.West();
 
                 case 'l':
-                    (x)++;
-                    break;
+                    return p.East();
 
                 default:
-                    (x) = (y) = -1;
-                    break;
+                    return Position.Empty;
             }
         }
 
@@ -145,7 +131,7 @@ namespace HackSharp
         /// </summary>
         /// <param name="dice"></param>
         /// <returns></returns>
-        internal static int dice(string dice)
+        internal static int Dice(string dice)
         {
             int roll = 0;
             int sides;
@@ -155,7 +141,7 @@ namespace HackSharp
             dice = dice.Replace(" ", "");
             Match match = Regex.Match(dice, @"^(\d+)d(\d+)(([\+\-])(\d+)){0,1}$");
             if (!match.Success)
-                Error.die("Invalid dice format.");
+                Error.Die("Invalid dice format.");
 
             int.TryParse(match.Groups[1].Value, out amount);
             int.TryParse(match.Groups[2].Value, out sides);
@@ -166,38 +152,6 @@ namespace HackSharp
                 roll += Terminal.RandInt(sides) + 1;
 
             return roll + bonus;
-        }
-
-        /// <summary>
-        /// Return the absolute value of a variable.
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        internal static int iabs(int x)
-        {
-            return Math.Abs(x);
-        }
-
-        /// <summary>
-        /// Return the maximum of two given values.
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        internal static int imax(int a, int b)
-        {
-            return ((a > b) ? a : b);
-        }
-
-        /// <summary>
-        /// Return the minimum of two given values.
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        internal static int imin(int a, int b)
-        {
-            return ((a < b) ? a : b);
         }
     }
 }

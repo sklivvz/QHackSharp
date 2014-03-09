@@ -66,19 +66,19 @@ namespace HackSharp
 
         /* Combat related stuff. */
         private int _toDamage;
-        private int _toHit;
+        private int toHit;
 
 
         /* Update the player status line? */
-        private bool _updateNecessary = true;
+
+        public Player()
+        {
+            UpdateNecessary = true;
+        }
 
         /* String constants for the training skills. */
 
-        public bool UpdateNecessary
-        {
-            get { return _updateNecessary; }
-            set { _updateNecessary = value; }
-        }
+        public bool UpdateNecessary { get; set; }
 
         /// <summary>
         /// Set up all the data for the player.
@@ -92,17 +92,17 @@ namespace HackSharp
 
             /* Initial attributes. */
             for (i = 0; i < (int) Attributes.MaxAttribute; i++)
-                SetAttribute((Attributes) i, Misc.dice("6d3"));
+                SetAttribute((Attributes) i, Misc.Dice("6d3"));
 
             /* Initial hitpoints. */
             _hits = _maxHits = (GetAttribute(Attributes.Toughness) +
                                                                       (GetAttribute(Attributes.Strength) >> 1) +
-                                                                      Misc.dice("1d6"));
+                                                                      Misc.Dice("1d6"));
 
             /* Initial magical power. */
             _power = _maxPower = (GetAttribute(Attributes.Mana) +
                                                                         (GetAttribute(Attributes.Intelligence) >> 2) +
-                                                                        Misc.dice("1d6"));
+                                                                        Misc.Dice("1d6"));
 
             /* Initial experience. */
             _experience = 0;
@@ -118,7 +118,7 @@ namespace HackSharp
                                                     (GetAttribute(Attributes.Mana)/5));
 
             /* Combat bonusses. */
-            _toHit = _toDamage = 0;
+            toHit = _toDamage = 0;
 
             /* Default name. */
             _name = "brak";
@@ -150,7 +150,7 @@ namespace HackSharp
         /// </summary>
         internal void UpdatePlayerStatus()
         {
-            if (_updateNecessary)
+            if (UpdateNecessary)
             {
                 Terminal.Cursor(0, 24);
                 Terminal.SetColor(ConsoleColor.Gray);
@@ -169,7 +169,7 @@ namespace HackSharp
                     , (long) _experience);
                 Terminal.ClearToEol();
 
-                _updateNecessary = false;
+                UpdateNecessary = false;
             }
         }
 
@@ -195,9 +195,12 @@ namespace HackSharp
             int remainingUnits = Config.Tunits;
             for (i = 0; i < MaxSkills; i++)
             {
-                length = Misc.imax(length, (TskillS[i]).Length);
-                expLength = Misc.imax(expLength, (_tskillExp[i]/Config.Tunits).ToString().Length);
-                unitLength = Misc.imax(unitLength, (RequiredExp((TrainingSkills) i)/Config.Tunits).ToString().Length);
+                int b = (TskillS[i]).Length;
+                length = Math.Max(length, b);
+                int b1 = (_tskillExp[i]/Config.Tunits).ToString().Length;
+                expLength = Math.Max(expLength, b1);
+                int b2 = (RequiredExp((TrainingSkills) i)/Config.Tunits).ToString().Length;
+                unitLength = Math.Max(unitLength, b2);
                 remainingUnits -= _tskillTraining[i];
             }
 
@@ -213,8 +216,10 @@ namespace HackSharp
 
                     int trainingLength = 0;
                     for (i = 0; i < MaxSkills; i++)
-                        trainingLength = Misc.imax(trainingLength,
-                                                   _tskillTraining[i].ToString().Length);
+                    {
+                        int b = _tskillTraining[i].ToString().Length;
+                        trainingLength = Math.Max(trainingLength, b);
+                    }
                     for (i = 0; i < MaxSkills; i++)
                     {
                         Terminal.Cursor(3, i);
@@ -303,7 +308,7 @@ namespace HackSharp
             } while (c != 27 && c != 'Q' && c != 32);
 
             /* Clean up. */
-            _game.redraw();
+            _game.Redraw();
         }
 
         /// <summary>
@@ -337,7 +342,7 @@ namespace HackSharp
                     return (_maxPower + 1)*Config.Tunits;
 
                 case TrainingSkills.T_2HIT:
-                    return (((_toHit + 1)*(_toHit + 2)) >> 1)*5*Config.Tunits;
+                    return (((toHit + 1)*(toHit + 2)) >> 1)*5*Config.Tunits;
 
                 case TrainingSkills.T_2DAMAGE:
                     return (((_toDamage + 1)*(_toDamage + 2)) >> 1)
@@ -373,7 +378,7 @@ namespace HackSharp
                     return _maxPower;
 
                 case TrainingSkills.T_2HIT:
-                    return _toHit;
+                    return toHit;
 
                 case TrainingSkills.T_2DAMAGE:
                     return _toDamage;
@@ -412,7 +417,7 @@ namespace HackSharp
                     break;
 
                 case TrainingSkills.T_2HIT:
-                    _toHit++;
+                    toHit++;
                     break;
 
                 case TrainingSkills.T_2DAMAGE:
@@ -423,7 +428,7 @@ namespace HackSharp
                     _searching++;
                     break;
             }
-            _updateNecessary = true;
+            UpdateNecessary = true;
         }
 
         /// <summary>
@@ -447,12 +452,12 @@ namespace HackSharp
                 {
                     _tskillExp[i] -= RequiredExp((TrainingSkills) i);
                     IncreaseTrainingSkill((TrainingSkills) i);
-                    Misc.message("Your {0} increases to {1}.", TskillS[i], CurrentLevel((TrainingSkills) i));
+                    Misc.Message("Your {0} increases to {1}.", TskillS[i], CurrentLevel((TrainingSkills) i));
                 }
             }
 
             /* Update the changes. */
-            _updateNecessary = true;
+            UpdateNecessary = true;
         }
     }
 }

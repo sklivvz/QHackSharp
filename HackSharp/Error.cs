@@ -29,9 +29,9 @@ namespace HackSharp
         /// Die with an error message.
         /// </summary>
         /// <param name="message"></param>
-        internal static void die(string message)
+        internal static void Die(string message)
         {
-            Console.WriteLine("HackSharp -- Internal error!\n*** Bug: {0}.\n", message);
+            Console.Error.WriteLine("HackSharp -- Internal error!\n*** Bug: {0}.\n", message);
             Environment.Exit(1);
         }
     }

@@ -38,7 +38,7 @@ namespace HackSharp
             if (monsters == null) throw new ArgumentNullException("monsters");
 
             _dungeon = dungeon;
-            _d = dungeon.Complex;
+            _d = dungeon.TheComplex;
             _monsters = monsters;
         }
 
@@ -62,11 +62,10 @@ namespace HackSharp
             _d.Visited[0] = true;
 
             /* Initial player position. */
-            _d.PlayerX = _d.OldPlayerX = _d.StairsUpX[0];
-            _d.PlayerY = _d.OldPlayerY = _d.StairsUpY[0];
+            _d.PlayerPos = _d.OldPlayerPos = _d.StairsUp[0];
 
             /* Initial panel position. */
-            _d.psx = _d.psy = 0;
+            _d.PanelPos = new Position(0,0);
 
             /*
             * Standard stuff.
@@ -78,14 +77,14 @@ namespace HackSharp
             do
             {
                 /* Print all the new things. */
-                UpdateScreen(_d.PlayerX, _d.PlayerY);
-                _dungeon.Complex.ThePlayer.UpdatePlayerStatus();
+                UpdateScreen(_d.PlayerPos);
+                _dungeon.TheComplex.ThePlayer.UpdatePlayerStatus();
 
                 /* Display the player and center the cursor. */
-                _dungeon.MapCursor(_d.PlayerX, _d.PlayerY);
+                _dungeon.MapCursor(_d.PlayerPos);
                 Terminal.SetColor(ConsoleColor.White);
                 Terminal.PrintChar('@');
-                _dungeon.MapCursor(_d.PlayerX, _d.PlayerY);
+                _dungeon.MapCursor(_d.PlayerPos);
 
                 /* Refresh the IO stuff. */
                 Terminal.Update();
@@ -103,14 +102,13 @@ namespace HackSharp
                 Misc.clear_messages();
 
                 /* Memorize the old PC position. */
-                int opx = _d.PlayerX;
-                int opy = _d.PlayerY;
+                var oldPosition = _d.PlayerPos;
 
                 /* Act depending on the last key received. */
                 switch (c)
                 {
                     case 'T':
-                        _dungeon.Complex.ThePlayer.AdjustTraining();
+                        _dungeon.TheComplex.ThePlayer.AdjustTraining();
                         break;
 
                     case 'o':
@@ -129,15 +127,15 @@ namespace HackSharp
                         break;
 
                     case 'R':
-                        redraw();
+                        Redraw();
                         break;
 
-                    case 'J':
+                    case 'H':
                         ActivateWalkMode();
                         Try(Direction.W);
                         break;
 
-                    case 'K':
+                    case 'J':
                         ActivateWalkMode();
                         Try(Direction.S);
                         break;
@@ -147,87 +145,97 @@ namespace HackSharp
                         Try(Direction.E);
                         break;
 
-                    case 'I':
+                    case 'K':
                         ActivateWalkMode();
                         Try(Direction.N);
                         break;
 
-                    case 'j':
-                        if (_dungeon.IsOpen(_d.PlayerX - 1, _d.PlayerY))
-                            _d.PlayerX--;
+                    case 'h':
+                    {
+                        SafeMove(_d.PlayerPos.West());
                         break;
+                    }
 
                     case 'l':
-                        if (_dungeon.IsOpen(_d.PlayerX + 1, _d.PlayerY))
-                            _d.PlayerX++;
+                    {
+                        SafeMove(_d.PlayerPos.East());
                         break;
-
-                    case 'i':
-                        if (_dungeon.IsOpen(_d.PlayerX, _d.PlayerY - 1))
-                            _d.PlayerY--;
-                        break;
+                    }
 
                     case 'k':
-                        if (_dungeon.IsOpen(_d.PlayerX, _d.PlayerY + 1))
-                            _d.PlayerY++;
+                    {
+                        SafeMove(_d.PlayerPos.North());
                         break;
+                    }
+
+                    case 'j':
+                    {
+                        SafeMove(_d.PlayerPos.South());
+                        break;
+                    }
 
                 }
 
-                _d.OldPlayerX = opx;
-                _d.OldPlayerY = opy;
+                _d.OldPlayerPos = oldPosition;
 
                 /* Remove the player character from the screen. */
-                _dungeon.PrintTile(opx, opy);
+                _dungeon.PrintTile(oldPosition);
             } while (c != 'Q');
         }
 
+        private bool SafeMove(Position position)
+        {
+            if (_dungeon.IsOpen(position))
+            {
+                _d.PlayerPos = position;
+                return true;
+            }
+            return false;
+        }
 
         /// <summary>
         /// Update the screen based upon the current player position.  Panel scrolling is also handled in this function.
         /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        private void UpdateScreen(int x, int y)
+        /// <param name="p">The position.</param>
+        private void UpdateScreen(Position p)
         {
-            int sx;
-            int sy;
-            int px;
-            int py;
-
             /* Find the current general section. */
-            _dungeon.GetCurrentSectionCoordinates(_d.PlayerX, _d.PlayerY, out sx, out sy);
+            Position p1 = _dungeon.GetCurrentSectionCoordinates(_d.PlayerPos);
 
             /* Memorize the old panel view. */
-            int opsx = _d.psx;
-            int opsy = _d.psy;
+            var oldPos = _d.PanelPos;
 
             /* Adjust the panel view. */
-            while (sx < _d.psx)
-                _d.psx--;
-            while (_d.psx + 4 < sx)
-                _d.psx++;
-            while (sy < _d.psy)
-                _d.psy--;
-            while (_d.psy + 1 < sy)
-                _d.psy++;
+            while (_d.PanelPos.X >= p1.X)
+                _d.PanelPos = _d.PanelPos.West();
+            while (_d.PanelPos.X + 4 < p1.X)
+                _d.PanelPos = _d.PanelPos.East();
+            while (_d.PanelPos.Y >= p1.Y)
+                _d.PanelPos = _d.PanelPos.North();
+            while (_d.PanelPos.Y + 1 < p1.Y)
+                _d.PanelPos = _d.PanelPos.South();
 
             /* Repaint the whole screen map if necessary. */
-            if (opsx != _d.psx || opsy != _d.psy)
+            if (!oldPos.Equals(_d.PanelPos))
                 _dungeon.PaintMap();
 
             /* Make the immediate surroundings known. */
-            for (px = x - 1; px <= x + 1; px++)
-                for (py = y - 1; py <= y + 1; py++)
-                    _dungeon.Know(px, py);
+            for (int px = p.X - 1; px <= p.X + 1; px++)
+                for (int py = p.Y - 1; py <= p.Y + 1; py++)
+                {
+                    _dungeon.Know(new Position(px, py));
+                }
 
             /* Check whether the PC is in a room or not. */
-            _dungeon.GetCurrentSection(_d.PlayerX, _d.PlayerY, out sx, out sy);
+            var currentSection = _dungeon.GetCurrentSection(_d.PlayerPos);
 
             /* Make rooms known. */
-            if (sx != -1 && sy != -1)
-                _dungeon.KnowSection(sx, sy);
+            if (!currentSection.Equals(Position.Empty))
+            {
+                _dungeon.KnowSection(currentSection);
+            }
         }
+
 
         /// <summary>
         /// Try to walk into a given direction.  This is used by the walk-mode when the player tries to run into a given direction.
@@ -244,19 +252,25 @@ namespace HackSharp
             int sx2;
             int sy2;
 
-            _dungeon.GetCurrentSection(_d.PlayerX, _d.PlayerY, out sx1, out sy1);
+            var temp = _dungeon.GetCurrentSection(_d.PlayerPos);
+            sx1 = temp.X;
+            sy1 = temp.Y;
 
             /* 
             * Check whether running should be stopped.
             */
 
+            var north = _d.PlayerPos.North();
+            var west = _d.PlayerPos.West();
+            var east = _d.PlayerPos.East();
+            var south = _d.PlayerPos.South();
             if (_walkSteps > 0 || _walkInRoom)
             {
                 /* Count the possible ways. */
-                int cn = (_dungeon.MightBeOpen(_d.PlayerX, _d.PlayerY - 1) && (_d.PlayerY - 1 != _d.OldPlayerY)) ? 1 : 0;
-                int cs = (_dungeon.MightBeOpen(_d.PlayerX, _d.PlayerY + 1) && (_d.PlayerY + 1 != _d.OldPlayerY)) ? 1 : 0;
-                int cw = (_dungeon.MightBeOpen(_d.PlayerX - 1, _d.PlayerY) && (_d.PlayerX - 1 != _d.OldPlayerX)) ? 1 : 0;
-                int ce = (_dungeon.MightBeOpen(_d.PlayerX + 1, _d.PlayerY) && (_d.PlayerX + 1 != _d.OldPlayerX)) ? 1 : 0;
+                int cn = (_dungeon.MightBeOpen(north) && (_d.PlayerPos.Y - 1 != _d.OldPlayerPos.Y)) ? 1 : 0;
+                int cs = (_dungeon.MightBeOpen(south) && (_d.PlayerPos.Y + 1 != _d.OldPlayerPos.Y)) ? 1 : 0;
+                int cw = (_dungeon.MightBeOpen(west) && (_d.PlayerPos.X - 1 != _d.OldPlayerPos.X)) ? 1 : 0;
+                int ce = (_dungeon.MightBeOpen(east) && (_d.PlayerPos.X + 1 != _d.OldPlayerPos.X)) ? 1 : 0;
 
                 /* Check... */
                 if (_walkInRoom)
@@ -296,7 +310,10 @@ namespace HackSharp
 
                     /* Check for special features. */
                     if (_walkSteps > 0)
-                        _walkMode = _walkMode && (_dungeon.TileAt(_d.PlayerX, _d.PlayerY) == Tiles.Floor);
+                    {
+                        Position p = _d.PlayerPos;
+                        _walkMode = _walkMode && ((char)Dungeon.Map[p.X, p.Y] == Tiles.Floor);
+                    }
                 }
                 else
                     /* Check for intersections. */
@@ -327,52 +344,54 @@ namespace HackSharp
             switch (dir)
             {
                 case Direction.N:
-                    if (_dungeon.IsOpen(_d.PlayerX, _d.PlayerY - 1))
-                        _d.PlayerY--;
-                    else if (_dungeon.IsOpen(_d.PlayerX - 1, _d.PlayerY) && _d.PlayerX - 1 != _d.OldPlayerX)
-                        _d.PlayerX--;
-                    else if (_dungeon.IsOpen(_d.PlayerX + 1, _d.PlayerY) && _d.PlayerX + 1 != _d.OldPlayerX)
-                        _d.PlayerX++;
+                    if (_dungeon.IsOpen(north))
+                        _d.PlayerPos = north;
+                    else if (_dungeon.IsOpen(west) && _d.PlayerPos.X - 1 != _d.OldPlayerPos.X)
+                        _d.PlayerPos = west;
+                    else if (_dungeon.IsOpen(east) && _d.PlayerPos.X + 1 != _d.OldPlayerPos.X)
+                        _d.PlayerPos = east;
                     else
                         _walkMode = false;
                     break;
 
                 case Direction.S:
-                    if (_dungeon.IsOpen(_d.PlayerX, _d.PlayerY + 1))
-                        _d.PlayerY++;
-                    else if (_dungeon.IsOpen(_d.PlayerX - 1, _d.PlayerY) && _d.PlayerX - 1 != _d.OldPlayerX)
-                        _d.PlayerX--;
-                    else if (_dungeon.IsOpen(_d.PlayerX + 1, _d.PlayerY) && _d.PlayerX + 1 != _d.OldPlayerX)
-                        _d.PlayerX++;
+                    if (_dungeon.IsOpen(south))
+                        _d.PlayerPos= south;
+                    else if (_dungeon.IsOpen(west) && _d.PlayerPos.X - 1 != _d.OldPlayerPos.X)
+                        _d.PlayerPos = west;
+                    else if (_dungeon.IsOpen(east) && _d.PlayerPos.X + 1 != _d.OldPlayerPos.X)
+                        _d.PlayerPos = east;
                     else
                         _walkMode = false;
                     break;
 
                 case Direction.E:
-                    if (_dungeon.IsOpen(_d.PlayerX + 1, _d.PlayerY))
-                        _d.PlayerX++;
-                    else if (_dungeon.IsOpen(_d.PlayerX, _d.PlayerY + 1) && _d.PlayerY + 1 != _d.OldPlayerY)
-                        _d.PlayerY++;
-                    else if (_dungeon.IsOpen(_d.PlayerX, _d.PlayerY - 1) && _d.PlayerY - 1 != _d.OldPlayerY)
-                        _d.PlayerY--;
+                    if (_dungeon.IsOpen(east))
+                        _d.PlayerPos = east;
+                    else if (_dungeon.IsOpen(south) && _d.PlayerPos.Y + 1 != _d.OldPlayerPos.Y)
+                        _d.PlayerPos = south;
+                    else if (_dungeon.IsOpen(north) && _d.PlayerPos.Y - 1 != _d.OldPlayerPos.Y)
+                        _d.PlayerPos = north;
                     else
                         _walkMode = false;
                     break;
 
                 case Direction.W:
-                    if (_dungeon.IsOpen(_d.PlayerX - 1, _d.PlayerY))
-                        _d.PlayerX--;
-                    else if (_dungeon.IsOpen(_d.PlayerX, _d.PlayerY + 1) && _d.PlayerY + 1 != _d.OldPlayerY)
-                        _d.PlayerY++;
-                    else if (_dungeon.IsOpen(_d.PlayerX, _d.PlayerY - 1) && _d.PlayerY - 1 != _d.OldPlayerY)
-                        _d.PlayerY--;
+                    if (_dungeon.IsOpen(west))
+                        _d.PlayerPos = west;
+                    else if (_dungeon.IsOpen(south) && _d.PlayerPos.Y + 1 != _d.OldPlayerPos.Y)
+                        _d.PlayerPos = south;
+                    else if (_dungeon.IsOpen(north) && _d.PlayerPos.Y - 1 != _d.OldPlayerPos.Y)
+                        _d.PlayerPos = north;
                     else
                         _walkMode = false;
                     break;
             }
 
             /* Find the new section. */
-            _dungeon.GetCurrentSection(_d.PlayerX, _d.PlayerY, out sx2, out sy2);
+            var temp1 = _dungeon.GetCurrentSection(_d.PlayerPos);
+            sx2 = temp1.X;
+            sy2 = temp1.Y;
 
             /* Entering/leaving a room will deactivate walk-mode. */
             if (_walkSteps > 0)
@@ -385,12 +404,12 @@ namespace HackSharp
         /// <summary>
         /// Redraw the whole screen.
         /// </summary>
-        internal void redraw()
+        internal void Redraw()
         {
             Misc.clear_messages();
             _dungeon.PaintMap();
-            _dungeon.Complex.ThePlayer.UpdateNecessary = true;
-            _dungeon.Complex.ThePlayer.UpdatePlayerStatus();
+            _dungeon.TheComplex.ThePlayer.UpdateNecessary = true;
+            _dungeon.TheComplex.ThePlayer.UpdatePlayerStatus();
             Terminal.Update();
         }
 
@@ -420,7 +439,7 @@ namespace HackSharp
                 _d.Visited[_d.DungeonLevel] = true;
 
                 /* Score some experience for exploring unknown depths. */
-                _dungeon.Complex.ThePlayer.ScoreExp(_d.DungeonLevel);
+                _dungeon.TheComplex.ThePlayer.ScoreExp(_d.DungeonLevel);
             }
 
             /* Place monsters in the appropriate positions. */
@@ -435,13 +454,13 @@ namespace HackSharp
         /// </summary>
         private void DescendLevel()
         {
-            if (_dungeon.TileAt(_d.PlayerX, _d.PlayerY) != Tiles.StairDown)
-                Misc.you("don't see any stairs leading downwards.");
+            Position p = _d.PlayerPos;
+            if ((char)Dungeon.Map[p.X, p.Y] != Tiles.StairDown)
+                Misc.You("don't see any stairs leading downwards.");
             else
             {
                 ModifyDungeonLevel(1);
-                _d.PlayerX = _d.StairsUpX[_d.DungeonLevel];
-                _d.PlayerY = _d.StairsUpY[_d.DungeonLevel];
+                _d.PlayerPos = _d.StairsUp[_d.DungeonLevel];
             }
         }
 
@@ -450,15 +469,15 @@ namespace HackSharp
         /// </summary>
         private void AscendLevel()
         {
-            if (_dungeon.TileAt(_d.PlayerX, _d.PlayerY) != Tiles.StairUp)
-                Misc.you("don't see any stairs leading upwards.");
+            Position p = _d.PlayerPos;
+            if ((char)Dungeon.Map[p.X, p.Y] != Tiles.StairUp)
+                Misc.You("don't see any stairs leading upwards.");
             else
             {
                 if (_d.DungeonLevel > 0)
                 {
                     ModifyDungeonLevel(-1);
-                    _d.PlayerX = _d.StairsDownX[_d.DungeonLevel];
-                    _d.PlayerY = _d.StairsDownY[_d.DungeonLevel];
+                    _d.PlayerPos = _d.StairsDown[_d.DungeonLevel];
                 }
                 else
                     /* Leave the dungeon. */
@@ -472,33 +491,32 @@ namespace HackSharp
         /// </summary>
         private void OpenDoor()
         {
-            int tx, ty;
-
             /* Find the door. */
-            Misc.get_target(_d.PlayerX, _d.PlayerY, out tx, out ty);
+            var target = Misc.GetTarget(_d.PlayerPos);
 
             /* Command aborted? */
-            if (tx == -1 || ty == -1)
+            if (target.Equals(Position.Empty))
                 return;
 
             /* Check the door. */
-            switch (_dungeon.TileAt(tx, ty))
+            Position p = target;
+            switch ((char)Dungeon.Map[p.X, p.Y])
             {
                 case Tiles.OpenDoor:
-                    Misc.message("This door is already open.");
+                    Misc.Message("This door is already open.");
                     break;
 
                 case Tiles.ClosedDoor:
-                    Misc.you("open the door.");
-                    _dungeon.ChangeDoor(tx, ty, Tiles.OpenDoor);
+                    Misc.You("open the door.");
+                    _dungeon.ChangeDoor(target,Tiles.OpenDoor);
                     break;
 
                 case Tiles.LockedDoor:
-                    Misc.message("This door seems to be locked.");
+                    Misc.Message("This door seems to be locked.");
                     break;
 
                 default:
-                    Misc.message("Which door?");
+                    Misc.Message("Which door?");
                     break;
             }
         }
@@ -508,14 +526,11 @@ namespace HackSharp
         /// </summary>
         private void ActivateWalkMode()
         {
-            int x, y;
-
             /* Activate walking. */
             _walkMode = true;
 
             /* Check for a room. */
-            _dungeon.GetCurrentSection(_d.PlayerX, _d.PlayerY, out x, out y);
-            _walkInRoom = (x != -1 && y != -1);
+            _walkInRoom = !_dungeon.GetCurrentSection(_d.PlayerPos).Equals(Position.Empty);
         }
     }
 }

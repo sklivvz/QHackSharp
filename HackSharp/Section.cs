@@ -18,6 +18,9 @@
  * place.  These sources must not be distributed for any fees in excess of
  * $3 (as of January, 1997).
  */
+
+using System.Runtime.Remoting.Messaging;
+
 namespace HackSharp
 {
     /*
@@ -31,20 +34,25 @@ namespace HackSharp
     public class Section
     {
         /* Room available? */
-        public bool exists;
+        public bool Exists;
 
         /* Room Coordinates. */
-        public byte rx1;
-        public byte rx2;
-        public byte ry1;
-        public byte ry2;
+        public Position TopLeft { get; set; }
+        public Position BottomRight { get; set; }
+
+        public Position[] Doors = new Position[4];
 
         /* Door positions. */
-        public byte[] dx = new byte[4]; //4
-        public byte[] dy = new byte[4];
+        public int[] dx {
+            get { return new[] {Doors[0].X, Doors[1].X, Doors[2].X, Doors[3].X}; }
+        }
+        public int[] dy
+        {
+            get { return new[] { Doors[0].Y, Doors[1].Y, Doors[2].Y, Doors[3].Y }; }
+        }
 
         /* Door types */
-        public byte[] dt = new byte[4]; //4
+        public int[] dt = new int[4]; //4
 
     }
 }
